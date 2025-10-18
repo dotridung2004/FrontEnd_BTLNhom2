@@ -24,6 +24,7 @@ class AppLocalizations {
 
   static final Map<String, Map<String, String>> _localizedValues = {
     'en': {
+      // ... (các khóa cũ không đổi)
       "loginWelcome": "Welcome Back!",
       "usernameHint": "Username",
       "passwordHint": "Password",
@@ -56,9 +57,17 @@ class AppLocalizations {
       "statusValue": "Working",
       "vietnamese": "Tiếng Việt",
       "english": "English",
-      "attendanceSaved": "Saved"
+      // THÊM CÁC KHÓA MỚI
+      "loadStudentList": "Load Student List",
+      "saveAttendance": "Save Attendance",
+      "attendanceSaved": "Saved",
+      "selectClass": "Select Class",
+      "present": "Present",
+      "absent": "Absent",
+      "late": "Late"
     },
     'vi': {
+      // ... (các khóa cũ không đổi)
       "loginWelcome": "Chào mừng trở lại!",
       "usernameHint": "Tên đăng nhập",
       "passwordHint": "Mật khẩu",
@@ -91,7 +100,14 @@ class AppLocalizations {
       "statusValue": "Đang công tác",
       "vietnamese": "Tiếng Việt",
       "english": "English",
-      "attendanceSaved": "Đã lưu"
+      // THÊM CÁC KHÓA MỚI
+      "loadStudentList": "Tải danh sách sinh viên",
+      "saveAttendance": "Lưu điểm danh",
+      "attendanceSaved": "Đã lưu",
+      "selectClass": "Chọn lớp",
+      "present": "Có mặt",
+      "absent": "Vắng",
+      "late": "Muộn"
     },
   };
 
@@ -133,7 +149,13 @@ class AppLocalizations {
   String get statusValue => _lookup('statusValue');
   String get vietnamese => _lookup('vietnamese');
   String get english => _lookup('english');
+  String get loadStudentList => _lookup('loadStudentList');
+  String get saveAttendance => _lookup('saveAttendance');
   String get attendanceSaved => _lookup('attendanceSaved');
+  String get selectClass => _lookup('selectClass');
+  String get present => _lookup('present');
+  String get absent => _lookup('absent');
+  String get late => _lookup('late');
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
@@ -144,8 +166,6 @@ class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> 
 
   @override
   Future<AppLocalizations> load(Locale locale) {
-    // Returning a SynchronousFuture here is because we don't need to
-    // load the translations from a file.
     return SynchronousFuture<AppLocalizations>(AppLocalizations(locale));
   }
 

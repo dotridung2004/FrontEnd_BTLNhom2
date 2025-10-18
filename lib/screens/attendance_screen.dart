@@ -16,11 +16,9 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   List<Student> _students = [];
   bool _isAttendanceSaved = false;
 
-  // BỘ NHỚ ĐỆM MỚI: Lưu trữ danh sách điểm danh và trạng thái đã lưu cho mỗi lớp
   final Map<String, List<Student>> _attendanceCache = {};
   final Map<String, bool> _savedStatusCache = {};
 
-  // Dữ liệu demo cho danh sách lớp
   final List<String> _classes = [
     'Phát triển ứng dụng cho các thiết bị di động-1-25 (CSE441_002)',
     'Phát triển ứng dụng cho các thiết bị di động-1-25 (CSE441_003)',
@@ -33,106 +31,158 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     _selectedClass = _classes.first;
   }
 
-  // Hàm tải danh sách sinh viên
+  String _getCacheKey() {
+    if (_selectedClass == null) return '';
+    String formattedDate =
+        "${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}";
+    return '$_selectedClass-$formattedDate';
+  }
+
   void _loadStudentList() {
+    final key = _getCacheKey();
+    if (key.isEmpty) return;
+    final localizations = AppLocalizations.of(context)!;
     setState(() {
       _studentListLoaded = true;
-      _isAttendanceSaved = false; // Reset trạng thái khi tải danh sách mới
+      _isAttendanceSaved = false;
       _students = [
         Student(id: '2251172211', name: 'Nguyễn Văn A', status: AttendanceStatus.none),
         Student(id: '2251172212', name: 'Trần Văn B', status: AttendanceStatus.none),
         Student(id: '2251172213', name: 'Nguyễn Minh C', status: AttendanceStatus.none),
       ];
-      // Lưu danh sách vừa tải vào bộ nhớ đệm
-      if (_selectedClass != null) {
-        _attendanceCache[_selectedClass!] = _students;
-        _savedStatusCache[_selectedClass!] = false;
-      }
+      _attendanceCache[key] = List.from(_students);
+      _savedStatusCache[key] = false;
     });
-    _showSuccessDialog("Tải danh sách sinh viên thành công");
+    _showCustomDialog(
+        title: localizations.logoutDialogTitle,
+        message: "Tải danh sách sinh viên thành công");
   }
 
-  // Hàm lưu điểm danh
   void _saveAttendance() {
+    final key = _getCacheKey();
+    if (key.isEmpty) return;
+    final localizations = AppLocalizations.of(context)!;
     setState(() {
-      _isAttendanceSaved = true; // Đánh dấu là đã lưu
-      // Cập nhật trạng thái đã lưu vào bộ nhớ đệm
-      if (_selectedClass != null) {
-        _savedStatusCache[_selectedClass!] = true;
-      }
+      _isAttendanceSaved = true;
+      _savedStatusCache[key] = true;
     });
-    _showSuccessDialog("Lưu điểm danh thành công");
+    _showCustomDialog(
+        title: localizations.logoutDialogTitle,
+        message: "Lưu điểm danh thành công");
   }
 
-  // Hàm hiển thị dialog thông báo thành công
-  void _showSuccessDialog(String message) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-        title: const Text("Thông báo!"),
-        content: Text(message),
-        actions: [
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-            child: const Text("Xác nhận", style: TextStyle(color: Colors.white)),
-          )
-        ],
-      ),
-    );
-  }
-
-  // Hàm cập nhật trạng thái điểm danh của sinh viên
   void _updateAttendance(int index, AttendanceStatus status) {
+    final key = _getCacheKey();
+    if (key.isEmpty) return;
     setState(() {
-      // Nếu trạng thái điểm danh thay đổi, cho phép lưu lại
       if (_students[index].status != status) {
         _isAttendanceSaved = false;
-        if (_selectedClass != null) {
-          _savedStatusCache[_selectedClass!] = false;
+        if (_savedStatusCache.containsKey(key)) {
+          _savedStatusCache[key] = false;
         }
       }
       _students[index].status = status;
+      _attendanceCache[key] = List.from(_students);
     });
   }
 
-  // Các hàm đếm số lượng sinh viên theo trạng thái
-  int get _presentCount => _students.where((s) => s.status == AttendanceStatus.present).length;
-  int get _absentCount => _students.where((s) => s.status == AttendanceStatus.absent).length;
-  int get _lateCount => _students.where((s) => s.status == AttendanceStatus.late).length;
+  // ✅ SỬA LỖI: Cập nhật lại giao diện Dialog
+  void _showCustomDialog({required String title, required String message}) {
+    final localizations = AppLocalizations.of(context)!;
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.5),
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0)),
+          child: Stack(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start, // Căn lề trái
+                  children: [
+                    Text(title,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 20,
+                            color: Colors.black)),
+                    const SizedBox(height: 16),
+                    Text(message,
+                        style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.black87)),
+                    const SizedBox(height: 24),
+                    Center( // Căn giữa nút bấm
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 12, horizontal: 50),
+                        ),
+                        child: Text(localizations.confirmButton,
+                            style: const TextStyle(
+                                color: Colors.white, fontSize: 16)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Positioned(
+                top: 8,
+                right: 8,
+                child: IconButton(
+                  icon: const Icon(Icons.close, color: Colors.black),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  int get _presentCount =>
+      _students.where((s) => s.status == AttendanceStatus.present).length;
+  int get _absentCount =>
+      _students.where((s) => s.status == AttendanceStatus.absent).length;
+  int get _lateCount =>
+      _students.where((s) => s.status == AttendanceStatus.late).length;
 
   @override
   Widget build(BuildContext context) {
-    // Lấy các chuỗi văn bản đã được dịch
     final localizations = AppLocalizations.of(context)!;
-
     return Scaffold(
       backgroundColor: Colors.white,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            _buildClassSelector(),
+            _buildClassSelector(localizations),
             const SizedBox(height: 16),
             _buildDateSelector(),
             const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _loadStudentList,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF2E7BC4),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                child: Text(
-                  // Sử dụng chuỗi đã dịch
-                    "Tải danh sách sinh viên",
-                    style: const TextStyle(color: Colors.white, fontSize: 16)
+            if (!_studentListLoaded)
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _loadStudentList,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2E7BC4),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: Text(localizations.loadStudentList,
+                      style:
+                      const TextStyle(color: Colors.white, fontSize: 16)),
                 ),
               ),
-            ),
             const SizedBox(height: 24),
             if (_studentListLoaded) ...[
               _buildSummaryCards(localizations),
@@ -142,20 +192,20 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  // Vô hiệu hóa nút nếu đã lưu, cho phép nhấn khi chưa lưu
                   onPressed: _isAttendanceSaved ? null : _saveAttendance,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2E7BC4),
-                    // Làm mờ nút khi bị vô hiệu hóa
                     disabledBackgroundColor: Colors.grey.shade400,
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                   ),
                   child: Text(
-                    // Thay đổi văn bản trên nút tùy theo trạng thái
-                      _isAttendanceSaved ? localizations.attendanceSaved : "Lưu điểm danh",
-                      style: const TextStyle(color: Colors.white, fontSize: 16)
-                  ),
+                      _isAttendanceSaved
+                          ? localizations.attendanceSaved
+                          : localizations.saveAttendance,
+                      style:
+                      const TextStyle(color: Colors.white, fontSize: 16)),
                 ),
               ),
             ]
@@ -165,7 +215,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     );
   }
 
-  Widget _buildClassSelector() {
+  // ... (Các hàm build còn lại không thay đổi)
+  Widget _buildClassSelector(AppLocalizations localizations) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12.0),
       decoration: BoxDecoration(
@@ -175,24 +226,23 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
-          hint: const Text("Chọn lớp"),
+          hint: Text(localizations.selectClass),
           value: _selectedClass,
           isExpanded: true,
           icon: const Icon(Icons.arrow_drop_down, color: Color(0xFF2E7BC4)),
           onChanged: (String? newValue) {
             setState(() {
               _selectedClass = newValue;
-              // KIỂM TRA BỘ NHỚ ĐỆM KHI CHUYỂN LỚP
-              if (newValue != null && _attendanceCache.containsKey(newValue)) {
-                // Nếu lớp đã có trong cache, tải lại dữ liệu từ cache
-                _students = _attendanceCache[newValue]!;
-                _isAttendanceSaved = _savedStatusCache[newValue]!;
+              final key = _getCacheKey();
+
+              if (_attendanceCache.containsKey(key)) {
+                _students = List.from(_attendanceCache[key]!);
+                _isAttendanceSaved = _savedStatusCache[key]!;
                 _studentListLoaded = true;
               } else {
-                // Nếu lớp chưa có, reset lại
+                _students.clear();
                 _studentListLoaded = false;
                 _isAttendanceSaved = false;
-                _students.clear();
               }
             });
           },
@@ -219,6 +269,17 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         if (picked != null && picked != _selectedDate) {
           setState(() {
             _selectedDate = picked;
+            final key = _getCacheKey();
+
+            if (_attendanceCache.containsKey(key)) {
+              _students = List.from(_attendanceCache[key]!);
+              _isAttendanceSaved = _savedStatusCache[key]!;
+              _studentListLoaded = true;
+            } else {
+              _students.clear();
+              _studentListLoaded = false;
+              _isAttendanceSaved = false;
+            }
           });
         }
       },
@@ -247,9 +308,9 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        _summaryCard("Có mặt", _presentCount.toString(), Colors.green),
-        _summaryCard("Vắng", _absentCount.toString(), Colors.red),
-        _summaryCard("Muộn", _lateCount.toString(), Colors.orange),
+        _summaryCard(localizations.present, _presentCount.toString(), Colors.green),
+        _summaryCard(localizations.absent, _absentCount.toString(), Colors.red),
+        _summaryCard(localizations.late, _lateCount.toString(), Colors.orange),
       ],
     );
   }
