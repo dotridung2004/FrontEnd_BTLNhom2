@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../generated/l10n.dart';
+import '../generated/l10n.dart'; // Sử dụng tệp giả lập
 import 'home_screen.dart';
 import 'schedule_screen.dart';
 import 'attendance_screen.dart';
@@ -15,7 +15,7 @@ class MainWrapper extends StatefulWidget {
 }
 
 class _MainWrapperState extends State<MainWrapper> {
-  int _selectedIndex = 1; // Start at Schedule screen
+  int _selectedIndex = 1; // Bắt đầu ở tab Lịch dạy
 
   static const List<Widget> _widgetOptions = <Widget>[
     HomeScreenContent(),
@@ -34,6 +34,8 @@ class _MainWrapperState extends State<MainWrapper> {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -75,7 +77,7 @@ class _MainWrapperState extends State<MainWrapper> {
           Padding(
             padding: const EdgeInsets.only(left: 8.0, right: 16.0),
             child: GestureDetector(
-              onTap: () => _onItemTapped(5), // Navigate to profile screen (index 5)
+              onTap: () => _onItemTapped(5), // <-- THAY ĐỔI: Chuyển đến tab "Tôi" (index 5)
               child: const CircleAvatar(
                 backgroundColor: Color(0xFF2E7BC4),
                 child: Text('D', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20)),
@@ -94,12 +96,12 @@ class _MainWrapperState extends State<MainWrapper> {
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
         items: [
-          BottomNavigationBarItem(icon: const Icon(Icons.home_outlined), activeIcon: const Icon(Icons.home), label: AppLocalizations.of(context)!.bottomNavHome),
-          BottomNavigationBarItem(icon: const Icon(Icons.calendar_today_outlined), activeIcon: const Icon(Icons.calendar_today), label: AppLocalizations.of(context)!.bottomNavSchedule),
-          BottomNavigationBarItem(icon: const Icon(Icons.check_circle_outline), activeIcon: const Icon(Icons.check_circle), label: AppLocalizations.of(context)!.bottomNavAttendance),
-          BottomNavigationBarItem(icon: const Icon(Icons.access_time_outlined), activeIcon: const Icon(Icons.access_time_filled), label: AppLocalizations.of(context)!.bottomNavLeave),
-          BottomNavigationBarItem(icon: const Icon(Icons.bar_chart_outlined), activeIcon: const Icon(Icons.bar_chart), label: AppLocalizations.of(context)!.bottomNavReport),
-          BottomNavigationBarItem(icon: const Icon(Icons.person_outline), activeIcon: const Icon(Icons.person), label: AppLocalizations.of(context)!.bottomNavProfile),
+          BottomNavigationBarItem(icon: const Icon(Icons.home_outlined), activeIcon: const Icon(Icons.home), label: localizations.bottomNavHome),
+          BottomNavigationBarItem(icon: const Icon(Icons.calendar_today_outlined), activeIcon: const Icon(Icons.calendar_today), label: localizations.bottomNavSchedule),
+          BottomNavigationBarItem(icon: const Icon(Icons.check_circle_outline), activeIcon: const Icon(Icons.check_circle), label: localizations.bottomNavAttendance),
+          BottomNavigationBarItem(icon: const Icon(Icons.access_time_outlined), activeIcon: const Icon(Icons.access_time_filled), label: localizations.bottomNavLeave),
+          BottomNavigationBarItem(icon: const Icon(Icons.bar_chart_outlined), activeIcon: const Icon(Icons.bar_chart), label: localizations.bottomNavReport),
+          BottomNavigationBarItem(icon: const Icon(Icons.person_outline), activeIcon: const Icon(Icons.person), label: localizations.bottomNavProfile),
         ],
       ),
     );
