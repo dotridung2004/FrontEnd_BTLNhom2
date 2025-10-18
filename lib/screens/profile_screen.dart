@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/locale_provider.dart';
 import 'login_screen.dart';
 import '../generated/l10n.dart';
+import '../widgets/confirmation_dialog.dart'; // Import tệp dialog mới
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -12,39 +13,30 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  // ✅ SỬA LỖI: Cập nhật hàm đăng xuất để sử dụng async/await
+  void _handleLogout() async {
+    final localizations = AppLocalizations.of(context)!;
 
-  void _showLogoutDialog(AppLocalizations localizations) {
-    showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-          title: Text(localizations.logoutDialogTitle),
-          content: Text(localizations.logoutDialogContent),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(localizations.cancelButton, style: const TextStyle(color: Colors.red)),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Đóng dialog
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (context) => const LoginScreen()),
-                      (Route<dynamic> route) => false,
-                );
-              },
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-              child: Text(localizations.confirmButton, style: const TextStyle(color: Colors.white)),
-            )
-          ],
-        ));
+    // Chờ kết quả từ hộp thoại xác nhận
+    final confirmed = await showConfirmationDialog(
+      context: context,
+      title: localizations.logoutDialogTitle,
+      content: localizations.logoutDialogContent,
+    );
+
+    // Chỉ thực hiện hành động nếu người dùng nhấn "Xác nhận"
+    if (confirmed == true && mounted) {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
+            (Route<dynamic> route) => false,
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final localeProvider = Provider.of<LocaleProvider>(context);
     final localizations = AppLocalizations.of(context)!;
-
     return Scaffold(
       backgroundColor: Colors.grey[100],
       body: SingleChildScrollView(
@@ -103,7 +95,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () => _showLogoutDialog(localizations),
+                      onPressed: _handleLogout, // Gọi hàm mới
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF2E7BC4),
                         padding: const EdgeInsets.symmetric(vertical: 16),
@@ -122,6 +114,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  // ... (Các hàm build còn lại không thay đổi)
   Widget _buildHeader(AppLocalizations localizations) {
     return Container(
       height: 220,
@@ -197,4 +190,3 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 }
-

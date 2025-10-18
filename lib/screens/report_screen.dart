@@ -12,7 +12,6 @@ class _ReportScreenState extends State<ReportScreen> {
   String selectedReportType = 'Báo cáo giảng dạy';
   DateTime startDate = DateTime.now().subtract(const Duration(days: 30));
   DateTime endDate = DateTime.now();
-  bool isCardView = true;
   bool _isBarChart = true;
 
   final List<String> reportTypes = [
@@ -39,9 +38,6 @@ class _ReportScreenState extends State<ReportScreen> {
     );
   }
 
-  // Toàn bộ các hàm build (_buildFilters, _buildStatsCards, _buildChartSection, etc.)
-  // được sao chép y hệt từ code bạn đã cung cấp.
-  // ... (Paste the rest of the ReportScreen code here)
   Widget _buildFilters() {
     return Container(
       padding: const EdgeInsets.all(20),
