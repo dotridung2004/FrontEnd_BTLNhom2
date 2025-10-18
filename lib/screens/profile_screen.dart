@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/locale_provider.dart';
 import 'login_screen.dart';
+import '../generated/l10n.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -9,30 +12,29 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  String _selectedLanguage = 'Tiếng Việt';
 
-  void _showLogoutDialog() {
+  void _showLogoutDialog(AppLocalizations localizations) {
     showDialog(
         context: context,
         builder: (context) => AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-          title: const Text("Thông báo!"),
-          content: const Text("Bạn có chắc chắn muốn đăng xuất?"),
+          title: Text(localizations.logoutDialogTitle),
+          content: Text(localizations.logoutDialogContent),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text("Hủy", style: TextStyle(color: Colors.red)),
+              child: Text(localizations.cancelButton, style: const TextStyle(color: Colors.red)),
             ),
             ElevatedButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Close dialog
+                Navigator.of(context).pop(); // Đóng dialog
                 Navigator.of(context).pushAndRemoveUntil(
                   MaterialPageRoute(builder: (context) => const LoginScreen()),
                       (Route<dynamic> route) => false,
                 );
               },
               style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-              child: const Text("Xác nhận", style: TextStyle(color: Colors.white)),
+              child: Text(localizations.confirmButton, style: const TextStyle(color: Colors.white)),
             )
           ],
         ));
@@ -40,55 +42,81 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final localeProvider = Provider.of<LocaleProvider>(context);
+    final localizations = AppLocalizations.of(context)!;
+
     return Scaffold(
       backgroundColor: Colors.grey[100],
       body: SingleChildScrollView(
         child: Column(
           children: [
-            _buildHeader(),
+            _buildHeader(localizations),
             Transform.translate(
               offset: const Offset(0, -50),
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(15),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 10,
-                      offset: const Offset(0, 5),
-                    )
-                  ],
-                ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: Column(
                   children: [
-                    _infoTile(Icons.cake_outlined, 'Ngày sinh', '15/5/1985'),
-                    _infoTile(Icons.male_outlined, 'Giới tính', 'Nam'),
-                    _infoTile(Icons.email_outlined, 'Email', 'dungkt@tlu.edu.vn'),
-                    _infoTile(Icons.phone_outlined, 'Số điện thoại', '0386666666'),
-                    _infoTile(Icons.badge_outlined, 'Mã giảng viên', 'GV001'),
-                    _infoTile(Icons.business_center_outlined, 'Bộ môn', 'Hệ thống thông tin'),
-                    _infoTile(Icons.info_outline, 'Trạng thái', 'Đang công tác', showDivider: false),
+                    _buildExpansionCard(
+                      title: localizations.personalInfo,
+                      icon: Icons.person_outline,
+                      children: [
+                        _infoTile(Icons.cake_outlined, localizations.birthDate, '15/5/1985'),
+                        _infoTile(Icons.male_outlined, localizations.gender, localizations.genderValue),
+                        _infoTile(Icons.email_outlined, localizations.email, 'dungkt@tlu.edu.vn'),
+                        _infoTile(Icons.phone_outlined, localizations.phone, '0386666666'),
+                        _infoTile(Icons.badge_outlined, localizations.lecturerId, 'GV001'),
+                        _infoTile(Icons.business_center_outlined, localizations.department, localizations.departmentValue),
+                        _infoTile(Icons.info_outline, localizations.status, localizations.statusValue, showDivider: false),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    _buildExpansionCard(
+                      title: localizations.language,
+                      icon: Icons.language_outlined,
+                      initiallyExpanded: true,
+                      children: [
+                        RadioListTile<Locale>(
+                          title: Text(localizations.vietnamese),
+                          value: const Locale('vi'),
+                          groupValue: localeProvider.locale,
+                          onChanged: (Locale? value) {
+                            if (value != null) {
+                              localeProvider.setLocale(value);
+                            }
+                          },
+                          activeColor: const Color(0xFF2E7BC4),
+                        ),
+                        RadioListTile<Locale>(
+                          title: Text(localizations.english),
+                          value: const Locale('en'),
+                          groupValue: localeProvider.locale,
+                          onChanged: (Locale? value) {
+                            if (value != null) {
+                              localeProvider.setLocale(value);
+                            }
+                          },
+                          activeColor: const Color(0xFF2E7BC4),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
             ),
-            _buildLanguageSelector(),
             const SizedBox(height: 20),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: _showLogoutDialog,
+                  onPressed: () => _showLogoutDialog(localizations),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2E7BC4),
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: const Text("Đăng xuất", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                  child: Text(localizations.logoutButton, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
               ),
             ),
@@ -99,7 +127,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(AppLocalizations localizations) {
     return Container(
       height: 220,
       width: double.infinity,
@@ -125,8 +153,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 12),
           const Text("Kiều Tuấn Dũng", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF1e293b))),
           const SizedBox(height: 4),
-          Text("Khoa: Công nghệ thông tin", style: TextStyle(fontSize: 16, color: Colors.grey[700])),
+          Text(localizations.profileHeaderTitle, style: TextStyle(fontSize: 16, color: Colors.grey[700])),
         ],
+      ),
+    );
+  }
+
+  Widget _buildExpansionCard({
+    required String title,
+    required IconData icon,
+    required List<Widget> children,
+    bool initiallyExpanded = false,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 10)],
+      ),
+      child: ExpansionTile(
+        leading: Icon(icon, color: Colors.grey[700]),
+        title: Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+        initiallyExpanded: initiallyExpanded,
+        children: children,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       ),
     );
   }
@@ -135,7 +186,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12.0),
+          padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16),
           child: Row(
             children: [
               Icon(icon, color: Colors.grey[600]),
@@ -146,43 +197,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ],
           ),
         ),
-        if (showDivider) Divider(height: 1, color: Colors.grey[200]),
+        if (showDivider) Divider(height: 1, color: Colors.grey[200], indent: 16, endIndent: 16),
       ],
-    );
-  }
-
-  Widget _buildLanguageSelector() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          )
-        ],
-      ),
-      child: ExpansionTile(
-        leading: const Icon(Icons.language_outlined),
-        title: const Text("Ngôn ngữ"),
-        children: [
-          RadioListTile<String>(
-            title: const Text('Tiếng Việt'),
-            value: 'Tiếng Việt',
-            groupValue: _selectedLanguage,
-            onChanged: (value) => setState(() => _selectedLanguage = value!),
-          ),
-          RadioListTile<String>(
-            title: const Text('Tiếng Anh'),
-            value: 'Tiếng Anh',
-            groupValue: _selectedLanguage,
-            onChanged: (value) => setState(() => _selectedLanguage = value!),
-          ),
-        ],
-      ),
     );
   }
 }

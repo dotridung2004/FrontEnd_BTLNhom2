@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:btl_nhom2/screens/splash_screen.dart'; // THAY 'package_name' BẰNG TÊN DỰ ÁN CỦA BẠN
+import 'package:provider/provider.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+
+import 'screens/splash_screen.dart';
+import 'providers/locale_provider.dart';
+import 'generated/l10n.dart'; // <-- Sửa lại import
 
 void main() {
   runApp(const MyApp());
@@ -10,16 +15,33 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'TLU Teaching Schedule',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        fontFamily: 'Roboto', // Sử dụng font nhất quán
-        scaffoldBackgroundColor: const Color(0xFFF0F4F8),
-        useMaterial3: true,
-      ),
-      home: const SplashScreen(),
+    return ChangeNotifierProvider(
+      create: (context) => LocaleProvider(),
+      builder: (context, child) {
+        final provider = Provider.of<LocaleProvider>(context);
+        return MaterialApp(
+          title: 'TLU Teaching Schedule',
+          debugShowCheckedModeBanner: false,
+
+          // SỬA LẠI CÁC DÒNG NÀY
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+
+          locale: provider.locale,
+          theme: ThemeData(
+            primarySwatch: Colors.blue,
+            fontFamily: 'Roboto',
+            scaffoldBackgroundColor: const Color(0xFFF0F4F8),
+            useMaterial3: true,
+          ),
+          home: const SplashScreen(),
+        );
+      },
     );
   }
 }
