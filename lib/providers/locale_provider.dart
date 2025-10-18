@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../generated/l10n.dart'; // Sử dụng tệp giả lập
+import '../generated/l10n.dart';
 
 class LocaleProvider extends ChangeNotifier {
   Locale _locale = const Locale('vi'); // Ngôn ngữ mặc định là Tiếng Việt
@@ -13,3 +13,4 @@ class LocaleProvider extends ChangeNotifier {
     notifyListeners(); // Thông báo cho các widget khác để cập nhật lại giao diện
   }
 }
+

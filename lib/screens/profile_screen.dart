@@ -51,73 +51,68 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: Column(
           children: [
             _buildHeader(localizations),
-            Transform.translate(
-              offset: const Offset(0, -50),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Column(
-                  children: [
-                    _buildExpansionCard(
-                      title: localizations.personalInfo,
-                      icon: Icons.person_outline,
-                      children: [
-                        _infoTile(Icons.cake_outlined, localizations.birthDate, '15/5/1985'),
-                        _infoTile(Icons.male_outlined, localizations.gender, localizations.genderValue),
-                        _infoTile(Icons.email_outlined, localizations.email, 'dungkt@tlu.edu.vn'),
-                        _infoTile(Icons.phone_outlined, localizations.phone, '0386666666'),
-                        _infoTile(Icons.badge_outlined, localizations.lecturerId, 'GV001'),
-                        _infoTile(Icons.business_center_outlined, localizations.department, localizations.departmentValue),
-                        _infoTile(Icons.info_outline, localizations.status, localizations.statusValue, showDivider: false),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    _buildExpansionCard(
-                      title: localizations.language,
-                      icon: Icons.language_outlined,
-                      initiallyExpanded: true,
-                      children: [
-                        RadioListTile<Locale>(
-                          title: Text(localizations.vietnamese),
-                          value: const Locale('vi'),
-                          groupValue: localeProvider.locale,
-                          onChanged: (Locale? value) {
-                            if (value != null) {
-                              localeProvider.setLocale(value);
-                            }
-                          },
-                          activeColor: const Color(0xFF2E7BC4),
-                        ),
-                        RadioListTile<Locale>(
-                          title: Text(localizations.english),
-                          value: const Locale('en'),
-                          groupValue: localeProvider.locale,
-                          onChanged: (Locale? value) {
-                            if (value != null) {
-                              localeProvider.setLocale(value);
-                            }
-                          },
-                          activeColor: const Color(0xFF2E7BC4),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 20), // Thêm khoảng cách sau header
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => _showLogoutDialog(localizations),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2E7BC4),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              child: Column(
+                children: [
+                  _buildExpansionCard(
+                    title: localizations.personalInfo,
+                    icon: Icons.person_outline,
+                    children: [
+                      _infoTile(Icons.cake_outlined, localizations.birthDate, '15/5/1985'),
+                      _infoTile(Icons.male_outlined, localizations.gender, localizations.genderValue),
+                      _infoTile(Icons.email_outlined, localizations.email, 'dungkt@tlu.edu.vn'),
+                      _infoTile(Icons.phone_outlined, localizations.phone, '0386666666'),
+                      _infoTile(Icons.badge_outlined, localizations.lecturerId, 'GV001'),
+                      _infoTile(Icons.business_center_outlined, localizations.department, localizations.departmentValue),
+                      _infoTile(Icons.info_outline, localizations.status, localizations.statusValue, showDivider: false),
+                    ],
                   ),
-                  child: Text(localizations.logoutButton, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                ),
+                  const SizedBox(height: 20),
+                  _buildExpansionCard(
+                    title: localizations.language,
+                    icon: Icons.language_outlined,
+                    initiallyExpanded: false,
+                    children: [
+                      RadioListTile<Locale>(
+                        title: Text(localizations.vietnamese),
+                        value: const Locale('vi'),
+                        groupValue: localeProvider.locale,
+                        onChanged: (Locale? value) {
+                          if (value != null) {
+                            localeProvider.setLocale(value);
+                          }
+                        },
+                        activeColor: const Color(0xFF2E7BC4),
+                      ),
+                      RadioListTile<Locale>(
+                        title: Text(localizations.english),
+                        value: const Locale('en'),
+                        groupValue: localeProvider.locale,
+                        onChanged: (Locale? value) {
+                          if (value != null) {
+                            localeProvider.setLocale(value);
+                          }
+                        },
+                        activeColor: const Color(0xFF2E7BC4),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 30), // Thêm khoảng cách trước nút đăng xuất
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => _showLogoutDialog(localizations),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2E7BC4),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: Text(localizations.logoutButton, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 20),
@@ -202,3 +197,4 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 }
+

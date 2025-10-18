@@ -4,7 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'screens/splash_screen.dart';
 import 'providers/locale_provider.dart';
-import 'generated/l10n.dart'; // <-- Sửa lại import
+import 'generated/l10n.dart';
 
 void main() {
   runApp(const MyApp());
@@ -23,7 +23,6 @@ class MyApp extends StatelessWidget {
           title: 'TLU Teaching Schedule',
           debugShowCheckedModeBanner: false,
 
-          // SỬA LẠI CÁC DÒNG NÀY
           supportedLocales: AppLocalizations.supportedLocales,
           localizationsDelegates: const [
             AppLocalizations.delegate,

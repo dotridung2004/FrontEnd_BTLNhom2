@@ -9,9 +9,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_localizations: # <-- Gói này vẫn cần thiết
+  flutter_localizations:
     sdk: flutter
-  intl: ^0.20.2 # <-- Gói này vẫn cần thiết
+  intl: ^0.20.2 # Hoặc phiên bản mới hơn nếu cần
   provider: ^6.1.2
   cupertino_icons: ^1.0.2
   fl_chart: ^0.68.0
