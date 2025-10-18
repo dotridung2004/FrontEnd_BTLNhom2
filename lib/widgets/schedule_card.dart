@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../screens/documents_screen.dart'; // Import màn hình mới
+import '../generated/l10n.dart'; // Import để lấy từ "Tài liệu"
 
 class ScheduleCard extends StatelessWidget {
   final String time, lessons, title, courseCode, location, status;
@@ -18,6 +20,7 @@ class ScheduleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -64,12 +67,22 @@ class ScheduleCard extends StatelessWidget {
                 ],
               ),
               ElevatedButton(
-                onPressed: () {},
+                // ✅ CẬP NHẬT: Thêm hành động điều hướng
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => DocumentsScreen(
+                        courseTitle: '$title $courseCode',
+                      ),
+                    ),
+                  );
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.red.shade600,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                 ),
-                child: const Text('Tài liệu', style: TextStyle(color: Colors.white)),
+                child: Text(localizations.documents, style: const TextStyle(color: Colors.white)),
               ),
             ],
           ),
