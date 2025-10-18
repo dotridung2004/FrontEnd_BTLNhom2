@@ -1,6 +1,11 @@
+import 'package:btl_nhom2/screens/profile_screen.dart';
+import 'package:btl_nhom2/screens/schedule_screen.dart';
 import 'package:flutter/material.dart';
 import 'report_screen.dart'; // BƯỚC 1: Import trang report_screen
 import 'main_wrapper.dart';
+import 'profile_screen.dart';
+import 'leave_makeup_screen.dart';
+import 'attendance_screen.dart';
 // BƯỚC 2: Chuyển Widget thành StatefulWidget
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,11 +22,11 @@ class _HomeScreenState extends State<HomeScreen> {
   // Tab 'Báo cáo' (vị trí 4) sẽ hiển thị ReportScreen()
   static const List<Widget> _widgetOptions = <Widget>[
     HomeScreenContent(), // Màn hình chính (tách ra để code gọn hơn)
-    Center(child: Text('Trang Lịch dạy')),
-    Center(child: Text('Trang Điểm danh')),
-    Center(child: Text('Trang Nghỉ/Bù')),
+    ScheduleScreen(),
+    AttendanceScreen(),
+    LeaveMakeupScreen(),
     ReportScreen(), // Màn hình báo cáo
-    Center(child: Text('Trang Tài khoản')),
+    ProfileScreen(),
   ];
 
   // BƯỚC 5: Tạo hàm xử lý khi một tab được nhấn
