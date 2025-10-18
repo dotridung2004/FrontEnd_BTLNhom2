@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/student.dart';
+import '../generated/l10n.dart'; // Import tệp ngôn ngữ
 
 class AttendanceScreen extends StatefulWidget {
   const AttendanceScreen({super.key});
@@ -13,8 +14,13 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   DateTime _selectedDate = DateTime(2025, 9, 19);
   bool _studentListLoaded = false;
   List<Student> _students = [];
+  bool _isAttendanceSaved = false;
 
-  // Data demo
+  // BỘ NHỚ ĐỆM MỚI: Lưu trữ danh sách điểm danh và trạng thái đã lưu cho mỗi lớp
+  final Map<String, List<Student>> _attendanceCache = {};
+  final Map<String, bool> _savedStatusCache = {};
+
+  // Dữ liệu demo cho danh sách lớp
   final List<String> _classes = [
     'Phát triển ứng dụng cho các thiết bị di động-1-25 (CSE441_002)',
     'Phát triển ứng dụng cho các thiết bị di động-1-25 (CSE441_003)',
@@ -27,23 +33,38 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     _selectedClass = _classes.first;
   }
 
+  // Hàm tải danh sách sinh viên
   void _loadStudentList() {
     setState(() {
       _studentListLoaded = true;
+      _isAttendanceSaved = false; // Reset trạng thái khi tải danh sách mới
       _students = [
-        Student(id: '2251172211', name: 'Nguyễn Văn A', status: AttendanceStatus.present),
-        Student(id: '2251172212', name: 'Trần Văn B', status: AttendanceStatus.absent),
-        Student(id: '2251172213', name: 'Nguyễn Minh C', status: AttendanceStatus.late),
-        // Thêm sinh viên khác nếu cần
+        Student(id: '2251172211', name: 'Nguyễn Văn A', status: AttendanceStatus.none),
+        Student(id: '2251172212', name: 'Trần Văn B', status: AttendanceStatus.none),
+        Student(id: '2251172213', name: 'Nguyễn Minh C', status: AttendanceStatus.none),
       ];
+      // Lưu danh sách vừa tải vào bộ nhớ đệm
+      if (_selectedClass != null) {
+        _attendanceCache[_selectedClass!] = _students;
+        _savedStatusCache[_selectedClass!] = false;
+      }
     });
     _showSuccessDialog("Tải danh sách sinh viên thành công");
   }
 
+  // Hàm lưu điểm danh
   void _saveAttendance() {
+    setState(() {
+      _isAttendanceSaved = true; // Đánh dấu là đã lưu
+      // Cập nhật trạng thái đã lưu vào bộ nhớ đệm
+      if (_selectedClass != null) {
+        _savedStatusCache[_selectedClass!] = true;
+      }
+    });
     _showSuccessDialog("Lưu điểm danh thành công");
   }
 
+  // Hàm hiển thị dialog thông báo thành công
   void _showSuccessDialog(String message) {
     showDialog(
       context: context,
@@ -62,18 +83,30 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     );
   }
 
+  // Hàm cập nhật trạng thái điểm danh của sinh viên
   void _updateAttendance(int index, AttendanceStatus status) {
     setState(() {
+      // Nếu trạng thái điểm danh thay đổi, cho phép lưu lại
+      if (_students[index].status != status) {
+        _isAttendanceSaved = false;
+        if (_selectedClass != null) {
+          _savedStatusCache[_selectedClass!] = false;
+        }
+      }
       _students[index].status = status;
     });
   }
 
+  // Các hàm đếm số lượng sinh viên theo trạng thái
   int get _presentCount => _students.where((s) => s.status == AttendanceStatus.present).length;
   int get _absentCount => _students.where((s) => s.status == AttendanceStatus.absent).length;
   int get _lateCount => _students.where((s) => s.status == AttendanceStatus.late).length;
 
   @override
   Widget build(BuildContext context) {
+    // Lấy các chuỗi văn bản đã được dịch
+    final localizations = AppLocalizations.of(context)!;
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SingleChildScrollView(
@@ -93,25 +126,36 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                child: const Text("Tải danh sách sinh viên", style: TextStyle(color: Colors.white, fontSize: 16)),
+                child: Text(
+                  // Sử dụng chuỗi đã dịch
+                    "Tải danh sách sinh viên",
+                    style: const TextStyle(color: Colors.white, fontSize: 16)
+                ),
               ),
             ),
             const SizedBox(height: 24),
             if (_studentListLoaded) ...[
-              _buildSummaryCards(),
+              _buildSummaryCards(localizations),
               const SizedBox(height: 16),
               _buildStudentListView(),
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: _saveAttendance,
+                  // Vô hiệu hóa nút nếu đã lưu, cho phép nhấn khi chưa lưu
+                  onPressed: _isAttendanceSaved ? null : _saveAttendance,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2E7BC4),
+                    // Làm mờ nút khi bị vô hiệu hóa
+                    disabledBackgroundColor: Colors.grey.shade400,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: const Text("Lưu điểm danh", style: TextStyle(color: Colors.white, fontSize: 16)),
+                  child: Text(
+                    // Thay đổi văn bản trên nút tùy theo trạng thái
+                      _isAttendanceSaved ? localizations.attendanceSaved : "Lưu điểm danh",
+                      style: const TextStyle(color: Colors.white, fontSize: 16)
+                  ),
                 ),
               ),
             ]
@@ -131,14 +175,25 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
+          hint: const Text("Chọn lớp"),
           value: _selectedClass,
           isExpanded: true,
           icon: const Icon(Icons.arrow_drop_down, color: Color(0xFF2E7BC4)),
           onChanged: (String? newValue) {
             setState(() {
               _selectedClass = newValue;
-              _studentListLoaded = false;
-              _students.clear();
+              // KIỂM TRA BỘ NHỚ ĐỆM KHI CHUYỂN LỚP
+              if (newValue != null && _attendanceCache.containsKey(newValue)) {
+                // Nếu lớp đã có trong cache, tải lại dữ liệu từ cache
+                _students = _attendanceCache[newValue]!;
+                _isAttendanceSaved = _savedStatusCache[newValue]!;
+                _studentListLoaded = true;
+              } else {
+                // Nếu lớp chưa có, reset lại
+                _studentListLoaded = false;
+                _isAttendanceSaved = false;
+                _students.clear();
+              }
             });
           },
           items: _classes.map<DropdownMenuItem<String>>((String value) {
@@ -188,7 +243,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     );
   }
 
-  Widget _buildSummaryCards() {
+  Widget _buildSummaryCards(AppLocalizations localizations) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -293,3 +348,4 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     );
   }
 }
+

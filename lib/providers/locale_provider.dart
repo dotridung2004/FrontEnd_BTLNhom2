@@ -7,10 +7,12 @@ class LocaleProvider extends ChangeNotifier {
   Locale get locale => _locale;
 
   void setLocale(Locale locale) {
-    // Chỉ thay đổi nếu ngôn ngữ được hỗ trợ
+    // Kiểm tra xem ngôn ngữ được chọn có được hỗ trợ không
     if (!AppLocalizations.supportedLocales.contains(locale)) return;
     _locale = locale;
-    notifyListeners(); // Thông báo cho các widget khác để cập nhật lại giao diện
+
+    // Thông báo cho các widget đang lắng nghe (như MaterialApp) để cập nhật lại
+    notifyListeners();
   }
 }
 

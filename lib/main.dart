@@ -19,6 +19,7 @@ class MyApp extends StatelessWidget {
       create: (context) => LocaleProvider(),
       builder: (context, child) {
         final provider = Provider.of<LocaleProvider>(context);
+
         return MaterialApp(
           title: 'TLU Teaching Schedule',
           debugShowCheckedModeBanner: false,
@@ -32,6 +33,7 @@ class MyApp extends StatelessWidget {
           ],
 
           locale: provider.locale,
+
           theme: ThemeData(
             primarySwatch: Colors.blue,
             fontFamily: 'Roboto',
@@ -44,3 +46,4 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
