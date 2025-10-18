@@ -1,61 +1,57 @@
 import 'package:flutter/material.dart';
 import '../widgets/schedule_card.dart';
+import '../generated/l10n.dart';
 
 class ScheduleScreen extends StatefulWidget {
-  const ScheduleScreen({super.key});
+  // Thêm callback để xử lý việc chuyển tab từ màn hình con
+  final ValueChanged<int> onSwitchTab;
+  const ScheduleScreen({super.key, required this.onSwitchTab});
 
   @override
   State<ScheduleScreen> createState() => _ScheduleScreenState();
 }
 
 class _ScheduleScreenState extends State<ScheduleScreen> {
-  bool _isTodayView = false; // Bắt đầu với view Tuần này
-  int _selectedDateIndex = 3; // Ngày 18 được chọn
+  bool _isTodayView = false;
+  int _selectedDateIndex = 3;
 
   final List<Map<String, String>> _weekDates = [
-    {'day': 'T2', 'date': '15'},
-    {'day': 'T3', 'date': '16'},
-    {'day': 'T4', 'date': '17'},
-    {'day': 'T5', 'date': '18'},
-    {'day': 'T6', 'date': '19'},
-    {'day': 'T7', 'date': '20'},
+    {'day': 'T2', 'date': '15'}, {'day': 'T3', 'date': '16'}, {'day': 'T4', 'date': '17'},
+    {'day': 'T5', 'date': '18'}, {'day': 'T6', 'date': '19'}, {'day': 'T7', 'date': '20'},
     {'day': 'CN', 'date': '21'},
   ];
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: Column(
         children: [
-          _buildTopToggle(),
+          _buildTopToggle(localizations),
           _isTodayView ? _buildTodayView() : _buildWeekView(),
           Expanded(
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              children: const [
+              children: [
+                // Truyền callback `onSwitchTab` xuống cho mỗi thẻ
                 ScheduleCard(
-                  time: '7:00 - 9:40',
-                  lessons: 'Tiết 1-3',
+                  time: '7:00 - 9:40', lessons: 'Tiết 1-3',
                   title: 'Phát triển ứng dụng cho các thiết bị di động-1-25',
-                  courseCode: '(CSE441_001)',
-                  location: '210 - B5',
-                  status: 'Đang diễn ra',
-                  statusColor: Colors.green,
-                  borderColor: Colors.green,
+                  courseCode: '(CSE441_001)', location: '210 - B5',
+                  status: 'Đang diễn ra', statusColor: Colors.green, borderColor: Colors.green,
+                  onSwitchTab: widget.onSwitchTab,
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 ScheduleCard(
-                  time: '9:45 - 12:25',
-                  lessons: 'Tiết 4-6',
+                  time: '9:45 - 12:25', lessons: 'Tiết 4-6',
                   title: 'Phát triển ứng dụng cho các thiết bị di động-1-25',
-                  courseCode: '(CSE441_002)',
-                  location: '207 - B5',
-                  status: 'Sắp diễn ra',
-                  statusColor: Colors.orange,
-                  borderColor: Colors.orange,
+                  courseCode: '(CSE441_002)', location: '207 - B5',
+                  status: 'Sắp diễn ra', statusColor: Colors.orange, borderColor: Colors.orange,
+                  onSwitchTab: widget.onSwitchTab,
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
               ],
             ),
           )
@@ -64,7 +60,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     );
   }
 
-  Widget _buildTopToggle() {
+  // ... (Các hàm build còn lại không thay đổi)
+  Widget _buildTopToggle(AppLocalizations localizations) {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Container(
@@ -84,7 +81,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    'Hôm nay',
+                    localizations.today,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: _isTodayView ? Colors.white : Colors.black,
@@ -104,7 +101,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    'Tuần này',
+                    localizations.thisWeek,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: !_isTodayView ? Colors.white : Colors.black,
@@ -209,3 +206,4 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     );
   }
 }
+

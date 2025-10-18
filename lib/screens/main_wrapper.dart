@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../generated/l10n.dart'; // Sử dụng tệp giả lập
+import '../generated/l10n.dart';
 import 'home_screen.dart';
 import 'schedule_screen.dart';
 import 'attendance_screen.dart';
@@ -15,16 +15,24 @@ class MainWrapper extends StatefulWidget {
 }
 
 class _MainWrapperState extends State<MainWrapper> {
-  int _selectedIndex = 1; // Bắt đầu ở tab Lịch dạy
+  int _selectedIndex = 1;
 
-  static const List<Widget> _widgetOptions = <Widget>[
-    HomeScreenContent(),
-    ScheduleScreen(),
-    AttendanceScreen(),
-    LeaveMakeupScreen(),
-    ReportScreen(),
-    ProfileScreen(),
-  ];
+  // Cập nhật lại danh sách widget để truyền callback
+  late final List<Widget> _widgetOptions;
+
+  @override
+  void initState() {
+    super.initState();
+    _widgetOptions = <Widget>[
+      const HomeScreenContent(),
+      // ✅ CẬP NHẬT: Truyền hàm _onItemTapped xuống màn hình Lịch dạy
+      ScheduleScreen(onSwitchTab: _onItemTapped),
+      const AttendanceScreen(),
+      const LeaveMakeupScreen(),
+      const ReportScreen(),
+      const ProfileScreen(),
+    ];
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -35,7 +43,6 @@ class _MainWrapperState extends State<MainWrapper> {
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context)!;
-
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -77,7 +84,7 @@ class _MainWrapperState extends State<MainWrapper> {
           Padding(
             padding: const EdgeInsets.only(left: 8.0, right: 16.0),
             child: GestureDetector(
-              onTap: () => _onItemTapped(5), // <-- THAY ĐỔI: Chuyển đến tab "Tôi" (index 5)
+              onTap: () => _onItemTapped(5),
               child: const CircleAvatar(
                 backgroundColor: Color(0xFF2E7BC4),
                 child: Text('D', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20)),
@@ -86,7 +93,10 @@ class _MainWrapperState extends State<MainWrapper> {
           ),
         ],
       ),
-      body: _widgetOptions.elementAt(_selectedIndex),
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: _widgetOptions,
+      ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         selectedItemColor: const Color(0xFF2E7BC4),
@@ -107,3 +117,4 @@ class _MainWrapperState extends State<MainWrapper> {
     );
   }
 }
+
