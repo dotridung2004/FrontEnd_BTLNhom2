@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../generated/l10n.dart';
 
-// Widget hộp thoại xác nhận có thể tái sử dụng
+// Hộp thoại xác nhận (Có nút Hủy và Xác nhận)
 Future<bool?> showConfirmationDialog({
   required BuildContext context,
   required String title,
@@ -62,7 +62,7 @@ Future<bool?> showConfirmationDialog({
   );
 }
 
-// Widget hộp thoại thông báo đơn giản
+// Hộp thoại thông báo (Chỉ có nút Xác nhận)
 void showInfoDialog({
   required BuildContext context,
   required String title,
