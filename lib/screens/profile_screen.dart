@@ -154,13 +154,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             (user.phoneNumber?.isNotEmpty ?? false)
                                 ? user.phoneNumber!
                                 : 'Chưa cập nhật'),
-                        _infoTile(Icons.badge_outlined, 'Mã người dùng',
-                            user.id.toString()),
+                        // _infoTile(Icons.badge_outlined, 'Mã người dùng',
+                        //     user.id.toString()),
                         _infoTile(Icons.business_center_outlined, 'Vai trò',
                             _getRoleDisplay(user.role)),
-                        _infoTile(Icons.info_outline, 'Trạng thái',
-                            _getStatusDisplay(user.status),
-                            showDivider: false),
+                        // _infoTile(Icons.info_outline, 'Trạng thái',
+                        //     _getStatusDisplay(user.status),
+                        //     showDivider: false),
                       ],
                     ),
                   ),
