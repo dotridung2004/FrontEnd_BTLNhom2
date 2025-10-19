@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'home_screen.dart'; // THAY ĐỔI QUAN TRỌNG
+import '../api_service.dart'; // 👈 import ApiService
+import '../table/user.dart'; // 👈 import model User
+import 'home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -11,74 +12,85 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _usernameController = TextEditingController();
+  // Sửa tên controller cho đúng chức năng (email)
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _rememberMe = false;
   bool _isPasswordVisible = false;
   bool _isLoading = false;
 
-  final Map<String, String> _demoAccounts = {
-    'admin': 'admin123',
-    'dungkt': '123456',
-    'giangvien2': 'gv123456',
-  };
+  final ApiService _apiService = ApiService();
 
   @override
   void dispose() {
-    _usernameController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
-  void _handleLogin() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
-      await Future.delayed(const Duration(seconds: 1));
+  // SỬA LẠI LOGIC ĐĂNG NHẬP CHO ĐÚNG
+  Future<void> _handleLogin() async {
+    if (!_formKey.currentState!.validate()) return;
 
-      final username = _usernameController.text.trim();
-      final password = _passwordController.text;
+    setState(() => _isLoading = true);
 
-      if (_demoAccounts.containsKey(username) && _demoAccounts[username] == password) {
-        if (mounted) {
-          _showSuccessDialog();
-          Future.delayed(const Duration(seconds: 2), () {
-            Navigator.of(context).pop(); // Close dialog
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const HomeScreen()), // Chuyển sang HomeScreen
-            );
-          });
-        }
-      } else {
+    try {
+      final email = _emailController.text.trim();
+      final password = _passwordController.text.trim();
+
+      final user = await _apiService.login(email, password);
+
+      // Nếu API không báo lỗi, nghĩa là đăng nhập thành công
+      if (mounted) {
+        // ✅ SỬA LẠI:
+        // Bỏ Future.delayed và Navigator.pop() vì không còn
+        // hiển thị dialog thành công nữa.
+        // Chỉ cần gọi pushReplacement là đủ.
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            // Truyền userId đã lấy được sang HomeScreen
+            builder: (context) => HomeScreen(userId: user.id),
+          ),
+        );
+      }
+    } catch (e) {
+      // Nếu API báo lỗi (sai email/password), nó sẽ nhảy vào đây
+      debugPrint('Lỗi đăng nhập: $e');
+      if (mounted) _showErrorDialog();
+    } finally {
+      // Đảm bảo `if (mounted)` trước khi gọi setState trong finally
+      if (mounted) {
         setState(() => _isLoading = false);
-        if (mounted) _showErrorDialog();
       }
     }
   }
 
-  void _showSuccessDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(20))),
-        title: Row(
-          children: [
-            Icon(Icons.check_circle, color: Color(0xFF10b981), size: 28),
-            SizedBox(width: 12),
-            Text('Đăng nhập thành công!'),
-          ],
-        ),
-        content: Text('Chào mừng bạn trở lại!'),
-      ),
-    );
-  }
+  // void _showSuccessDialog() {
+  //   showDialog(
+  //     context: context,
+  //     barrierDismissible: false,
+  //     builder: (context) => const AlertDialog(
+  //       shape: RoundedRectangleBorder(
+  //           borderRadius: BorderRadius.all(Radius.circular(20))),
+  //       title: Row(
+  //         children: [
+  //           Icon(Icons.check_circle, color: Color(0xFF10b981), size: 28),
+  //           SizedBox(width: 12),
+  //           Text('Đăng nhập thành công!'),
+  //         ],
+  //       ),
+  //       content: Text('Chào mừng bạn trở lại!'),
+  //     ),
+  //   );
+  // }
 
   void _showErrorDialog() {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(20))),
+        shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(20))),
         title: const Row(
           children: [
             Icon(Icons.error_outline, color: Color(0xFFef4444), size: 28),
@@ -87,7 +99,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ],
         ),
         content: const Text(
-          'Tên đăng nhập hoặc mật khẩu không chính xác.\n\nTài khoản demo:\n• dungkt / 123456',
+          'Email hoặc mật khẩu không chính xác.\n\nVui lòng thử lại.',
         ),
         actions: [
           TextButton(
@@ -99,8 +111,6 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // Các hàm và widget còn lại giữ nguyên như trong code bạn cung cấp...
-  // (Phần build, _buildLogo, _buildTextField, v.v... không thay đổi)
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -138,13 +148,17 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     const SizedBox(height: 40),
+                    // Sửa lại TextField để nhập Email
                     _buildTextField(
-                      controller: _usernameController,
-                      hintText: 'Tên đăng nhập',
-                      prefixIcon: Icons.person_outline,
+                      controller: _emailController,
+                      hintText: 'Email',
+                      prefixIcon: Icons.email_outlined,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Vui lòng nhập tên đăng nhập';
+                          return 'Vui lòng nhập email';
+                        }
+                        if (!value.contains('@')) {
+                          return 'Email không hợp lệ';
                         }
                         return null;
                       },
@@ -159,44 +173,29 @@ class _LoginScreenState extends State<LoginScreen> {
                         if (value == null || value.isEmpty) {
                           return 'Vui lòng nhập mật khẩu';
                         }
-                        if (value.length < 6) {
-                          return 'Mật khẩu phải có ít nhất 6 ký tự';
-                        }
                         return null;
                       },
                     ),
                     const SizedBox(height: 16),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Row(
-                          children: [
-                            SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: Checkbox(
-                                value: _rememberMe,
-                                onChanged: (value) {
-                                  setState(() {
-                                    _rememberMe = value ?? false;
-                                  });
-                                },
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                activeColor: const Color(0xFF2E7BC4),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            const Text(
-                              'Ghi nhớ đăng nhập',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Color(0xFF475569),
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
+                        Checkbox(
+                          value: _rememberMe,
+                          onChanged: (value) {
+                            setState(() => _rememberMe = value ?? false);
+                          },
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          activeColor: const Color(0xFF2E7BC4),
+                        ),
+                        const Text(
+                          'Ghi nhớ đăng nhập',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Color(0xFF475569),
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ],
                     ),
@@ -208,7 +207,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         onPressed: _isLoading ? null : _handleLogin,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF2E7BC4),
-                          disabledBackgroundColor: const Color(0xFF2E7BC4).withOpacity(0.6),
+                          disabledBackgroundColor:
+                          const Color(0xFF2E7BC4).withOpacity(0.6),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
@@ -247,7 +247,6 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _buildLogo() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Container(
           width: 100,
@@ -270,7 +269,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 fontSize: 40,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
-                letterSpacing: 2,
               ),
             ),
           ),
@@ -278,7 +276,6 @@ class _LoginScreenState extends State<LoginScreen> {
         const SizedBox(width: 16),
         const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               'Thuy Loi',
@@ -286,16 +283,13 @@ class _LoginScreenState extends State<LoginScreen> {
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
                 color: Color(0xFF2E7BC4),
-                height: 1.2,
               ),
             ),
             Text(
               'University',
               style: TextStyle(
                 fontSize: 18,
-                fontWeight: FontWeight.w400,
                 color: Color(0xFF2E7BC4),
-                height: 1.2,
               ),
             ),
           ],
@@ -327,21 +321,9 @@ class _LoginScreenState extends State<LoginScreen> {
         controller: controller,
         obscureText: isPassword && !_isPasswordVisible,
         validator: validator,
-        style: const TextStyle(
-          fontSize: 16,
-          color: Color(0xFF1e293b),
-        ),
         decoration: InputDecoration(
           hintText: hintText,
-          hintStyle: TextStyle(
-            fontSize: 16,
-            color: const Color(0xFF94a3b8).withOpacity(0.8),
-          ),
-          prefixIcon: Icon(
-            prefixIcon,
-            color: const Color(0xFF64748b),
-            size: 22,
-          ),
+          prefixIcon: Icon(prefixIcon, color: const Color(0xFF64748b)),
           suffixIcon: isPassword
               ? IconButton(
             icon: Icon(
@@ -349,7 +331,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ? Icons.visibility_outlined
                   : Icons.visibility_off_outlined,
               color: const Color(0xFF64748b),
-              size: 22,
             ),
             onPressed: () {
               setState(() {
@@ -361,31 +342,6 @@ class _LoginScreenState extends State<LoginScreen> {
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
             borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(
-              color: Color(0xFF2E7BC4),
-              width: 2,
-            ),
-          ),
-          errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(
-              color: Color(0xFFef4444),
-              width: 2,
-            ),
-          ),
-          focusedErrorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(
-              color: Color(0xFFef4444),
-              width: 2,
-            ),
           ),
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 20,

@@ -1,39 +1,111 @@
+// 👉 THÊM MỚI: Import ApiService và model User
+import 'package:btl_nhom2/api_service.dart';
+import 'package:btl_nhom2/table/user.dart';
+
+// --- Các import cũ ---
 import 'package:btl_nhom2/screens/profile_screen.dart';
 import 'package:btl_nhom2/screens/schedule_screen.dart';
 import 'package:flutter/material.dart';
-import 'report_screen.dart'; // BƯỚC 1: Import trang report_screen
-import 'main_wrapper.dart';
-import 'profile_screen.dart';
+import 'report_screen.dart';
 import 'leave_makeup_screen.dart';
 import 'attendance_screen.dart';
-// BƯỚC 2: Chuyển Widget thành StatefulWidget
+
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final int userId;
+  const HomeScreen({super.key, required this.userId});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // BƯỚC 3: Tạo biến state để lưu vị trí tab đang được chọn
   int _selectedIndex = 0;
+  late final List<Widget> _widgetOptions;
 
-  // BƯỚC 4: Tạo một danh sách các Widget tương ứng với các tab
-  // Tab 'Báo cáo' (vị trí 4) sẽ hiển thị ReportScreen()
-  static const List<Widget> _widgetOptions = <Widget>[
-    HomeScreenContent(), // Màn hình chính (tách ra để code gọn hơn)
-    ScheduleScreen(),
-    AttendanceScreen(),
-    LeaveMakeupScreen(),
-    ReportScreen(), // Màn hình báo cáo
-    ProfileScreen(),
-  ];
+  // 👉 THÊM MỚI: Biến để gọi API và lưu thông tin user
+  final ApiService _apiService = ApiService();
+  User? _currentUser; // Sẽ lưu thông tin user sau khi fetch
 
-  // BƯỚC 5: Tạo hàm xử lý khi một tab được nhấn
+  @override
+  void initState() {
+    super.initState();
+
+    _widgetOptions = <Widget>[
+      const HomeScreenContent(),
+      const ScheduleScreen(),
+      const AttendanceScreen(),
+      const LeaveMakeupScreen(),
+      const ReportScreen(),
+      ProfileScreen(userId: widget.userId),
+    ];
+
+    // 👉 THÊM MỚI: Gọi hàm để tải thông tin user
+    _fetchUserData();
+  }
+
+  // 👉 THÊM MỚI: Hàm lấy dữ liệu user từ API
+  Future<void> _fetchUserData() async {
+    try {
+      // ✅ SỬA LẠI: Gọi đúng tên hàm là "fetchUserById"
+      final user = await _apiService.fetchUserById(widget.userId);
+      if (mounted) {
+        setState(() {
+          _currentUser = user;
+        });
+      }
+    } catch (e) {
+      debugPrint('Lỗi tải thông tin user: $e');
+    }
+  }
+
   void _onItemTapped(int index) {
     setState(() {
-      _selectedIndex = index; // Cập nhật lại vị trí tab
+      _selectedIndex = index;
     });
+  }
+
+  // 👉 THÊM MỚI: Widget để xây dựng Avatar động
+  Widget _buildUserAvatar() {
+    // Trường hợp 1: Đang tải dữ liệu (user chưa có)
+    if (_currentUser == null) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16.0),
+        child: CircleAvatar(
+          backgroundColor: Colors.grey,
+          child: SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+          ),
+        ),
+      );
+    }
+
+    // Trường hợp 2: Đã tải xong (Áp dụng logic từ ProfileScreen)
+
+    // Lấy ảnh từ URL
+    final avatar = (_currentUser!.avatarUrl?.isNotEmpty ?? false)
+        ? NetworkImage(_currentUser!.avatarUrl!)
+        : null;
+
+    // Lấy chữ cái đầu (dự phòng)
+    final String initial = _currentUser!.name.isNotEmpty
+        ? _currentUser!.name[0].toUpperCase()
+        : 'U';
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: CircleAvatar(
+        backgroundColor: Colors.blue.shade700,
+        backgroundImage: avatar, // 👈 Thử tải ảnh
+        child: avatar == null // 👈 Nếu không có ảnh...
+            ? Text( // 👈 ...thì mới hiện chữ
+          initial,
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+        )
+            : null, // 👈 Nếu có ảnh thì không hiện chữ
+      ),
+    );
   }
 
   @override
@@ -72,24 +144,19 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.0),
-            child: CircleAvatar(
-              backgroundColor: Colors.blue,
-              child: Text('D', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-            ),
-          ),
+
+          // 👉 THAY ĐỔI: Sử dụng widget _buildUserAvatar()
+          _buildUserAvatar(),
+
         ],
       ),
-      // BƯỚC 6: Hiển thị Widget tương ứng với tab được chọn
       body: _widgetOptions.elementAt(_selectedIndex),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         selectedItemColor: Colors.blue.shade800,
         unselectedItemColor: Colors.grey,
-        // BƯỚC 7: Cập nhật các thuộc tính của BottomNavigationBar
-        currentIndex: _selectedIndex, // Mục đang được chọn
-        onTap: _onItemTapped, // Hàm xử lý khi nhấn
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Trang chủ'),
           BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: 'Lịch dạy'),
@@ -103,7 +170,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-// Widget chứa nội dung của màn hình chính (trước đây nằm trong body)
+// ... (Các widget bên dưới: HomeScreenContent, SummaryCard, ScheduleCard giữ nguyên) ...
+
 class HomeScreenContent extends StatelessWidget {
   const HomeScreenContent({super.key});
 
@@ -157,7 +225,6 @@ class HomeScreenContent extends StatelessWidget {
 }
 
 
-// --- CÁC WIDGET PHỤ KHÔNG THAY ĐỔI ---
 class SummaryCard extends StatelessWidget {
   final String value;
   final String label;
