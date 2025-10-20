@@ -25,7 +25,7 @@ class MyApp extends StatelessWidget {
 }
 
 //==================================================================
-// MÀN HÌNH 1: MÀN HÌNH NGHỈ/BÙ CHÍNH
+// MÀN HÌNH 1: MÀN HÌNH NGHỈ/BÙ CHÍNH (ĐÃ CẬP NHẬT)
 //==================================================================
 class LeaveAndMakeupScreen extends StatefulWidget {
   const LeaveAndMakeupScreen({super.key});
@@ -35,201 +35,137 @@ class LeaveAndMakeupScreen extends StatefulWidget {
 }
 
 class _LeaveAndMakeupScreenState extends State<LeaveAndMakeupScreen> {
-  int _selectedIndex = 3;
-
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     final expansionTileTheme = Theme.of(context).copyWith(dividerColor: Colors.transparent);
 
     return Scaffold(
       backgroundColor: Colors.grey[200],
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 1,
-        leading: const Padding(
-          padding: EdgeInsets.all(8.0),
-          child: CircleAvatar(
-            backgroundColor: Colors.blue,
-            child: Text(
-              'TLU',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-            ),
-          ),
-        ),
-        title: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Thuy Loi University',
-              style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 16),
-            ),
-            Text(
-              'Teaching Schedule',
-              style: TextStyle(color: Colors.black54, fontSize: 12),
-            ),
-          ],
-        ),
-        actions: [
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              const Icon(Icons.notifications_none, color: Colors.black54, size: 30),
-              Positioned(
-                top: 12,
-                right: 0,
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
-                  child: const Text('2', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+      body: SafeArea( // Thêm SafeArea để nội dung không bị tràn lên thanh trạng thái
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                // ===== PHẦN ĐÃ PHÓNG TO =====
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20), // Tăng padding
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16), // Tăng bo góc
+                    border: Border.all(color: Colors.grey.shade300),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.1),
+                        spreadRadius: 2,
+                        blurRadius: 5,
+                        offset: const Offset(0, 3),
+                      )
+                    ],
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Buổi đã nghỉ: 1', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)), // Tăng cỡ chữ
+                      Text('Buổi cần bù:1', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)), // Tăng cỡ chữ
+                    ],
+                  ),
                 ),
-              )
-            ],
-          ),
-          const SizedBox(width: 10),
-          const Padding(
-            padding: EdgeInsets.only(right: 16.0),
-            child: CircleAvatar(
-              backgroundColor: Colors.blue,
-              child: Text('D', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-            ),
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey.shade300),
-                ),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                // ===== KẾT THÚC PHẦN PHÓNG TO =====
+                const SizedBox(height: 20),
+                Row(
                   children: [
-                    Text('Buổi đã nghỉ: 1', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                    Text('Buổi cần bù:1', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const RegisterLeaveScreen()),
+                          );
+                        },
+                        icon: const Icon(Icons.cancel_outlined, color: Colors.white, size: 28),
+                        label: const Text('Đăng ký nghỉ dạy', style: TextStyle(color: Colors.white)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          padding: const EdgeInsets.symmetric(vertical: 20),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const RegisterMakeupScreen()),
+                          );
+                        },
+                        icon: const Icon(Icons.add_circle_outline, color: Colors.white, size: 28),
+                        label: const Text('Đăng ký dạy bù', style: TextStyle(color: Colors.white)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          padding: const EdgeInsets.symmetric(vertical: 20),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const RegisterLeaveScreen()),
-                        );
-                      },
-                      icon: const Icon(Icons.cancel_outlined, color: Colors.white, size: 28),
-                      label: const Text('Đăng ký nghỉ dạy', style: TextStyle(color: Colors.white)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        padding: const EdgeInsets.symmetric(vertical: 20),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
-                      ),
+                const SizedBox(height: 20),
+                Card(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 1,
+                  clipBehavior: Clip.antiAlias,
+                  child: Theme(
+                    data: expansionTileTheme,
+                    child: ExpansionTile(
+                      backgroundColor: Colors.white,
+                      collapsedBackgroundColor: Colors.white,
+                      title: const Text('Buổi cần bù(1)', style: TextStyle(fontWeight: FontWeight.bold)),
+                      children: const <Widget>[
+                        ScheduleDetailItem(
+                          timeRange: '9:45 - 12:25',
+                          lessonPeriod: 'Tiết 4-6',
+                          subjectName: 'Phát triển ứng dụng cho các thiết bị di động-1-25',
+                          courseCode: 'CSE441_002',
+                          location: '207 - B5',
+                          showMakeupButton: true,
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const RegisterMakeupScreen()),
-                        );
-                      },
-                      icon: const Icon(Icons.add_circle_outline, color: Colors.white, size: 28),
-                      label: const Text('Đăng ký dạy bù', style: TextStyle(color: Colors.white)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        padding: const EdgeInsets.symmetric(vertical: 20),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
-                      ),
+                ),
+                const SizedBox(height: 12),
+                Card(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 1,
+                  clipBehavior: Clip.antiAlias,
+                  child: Theme(
+                    data: expansionTileTheme,
+                    child: const ExpansionTile(
+                      backgroundColor: Colors.white,
+                      collapsedBackgroundColor: Colors.white,
+                      title: Text('Lịch sử nghỉ', style: TextStyle(fontWeight: FontWeight.bold)),
+                      children: <Widget>[
+                        ScheduleDetailItem(
+                          timeRange: '9:45 - 12:25',
+                          lessonPeriod: 'Tiết 4-6',
+                          subjectName: 'Phát triển ứng dụng cho các thiết bị di động-1-25',
+                          courseCode: 'CSE441_002',
+                          location: '207 - B5',
+                          showMakeupButton: false,
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              Card(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                elevation: 1,
-                clipBehavior: Clip.antiAlias,
-                child: Theme(
-                  data: expansionTileTheme,
-                  child: ExpansionTile(
-                    backgroundColor: Colors.white,
-                    collapsedBackgroundColor: Colors.white,
-                    title: const Text('Buổi cần bù(1)', style: TextStyle(fontWeight: FontWeight.bold)),
-                    children: const <Widget>[
-                      ScheduleDetailItem(
-                        timeRange: '9:45 - 12:25',
-                        lessonPeriod: 'Tiết 4-6',
-                        subjectName: 'Phát triển ứng dụng cho các thiết bị di động-1-25',
-                        courseCode: 'CSE441_002',
-                        location: '207 - B5',
-                        showMakeupButton: true,
-                      ),
-                    ],
-                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              Card(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                elevation: 1,
-                clipBehavior: Clip.antiAlias,
-                child: Theme(
-                  data: expansionTileTheme,
-                  child: const ExpansionTile(
-                    backgroundColor: Colors.white,
-                    collapsedBackgroundColor: Colors.white,
-                    title: Text('Lịch sử nghỉ', style: TextStyle(fontWeight: FontWeight.bold)),
-                    children: <Widget>[
-                      ScheduleDetailItem(
-                        timeRange: '9:45 - 12:25',
-                        lessonPeriod: 'Tiết 4-6',
-                        subjectName: 'Phát triển ứng dụng cho các thiết bị di động-1-25',
-                        courseCode: 'CSE441_002',
-                        location: '207 - B5',
-                        showMakeupButton: false,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Trang chủ'),
-          BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: 'Lịch dạy'),
-          BottomNavigationBarItem(icon: Icon(Icons.check_circle_outline), label: 'Điểm danh'),
-          BottomNavigationBarItem(icon: Icon(Icons.schedule), label: 'Nghỉ/Bù'),
-          BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: 'Báo cáo'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Tôi'),
-        ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: Colors.blue,
-        unselectedItemColor: Colors.grey,
-        showUnselectedLabels: true,
-        type: BottomNavigationBarType.fixed,
-        onTap: _onItemTapped,
       ),
     );
   }
@@ -353,7 +289,7 @@ class RegisterLeaveScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         child: ElevatedButton(
           onPressed: () {
-            // ✅ ĐÃ SỬA
+            // ✅ ĐÃ THÊM: Gọi dialog
             showSuccessDialog(context, 'Gửi yêu cầu nghỉ dạy thành công.');
           },
           style: ElevatedButton.styleFrom(
@@ -487,7 +423,7 @@ class RegisterMakeupScreen extends StatelessWidget {
             Expanded(
               child: ElevatedButton(
                 onPressed: () {
-                  // ✅ ĐÃ SỬA
+                  // ✅ ĐÃ THÊM: Gọi dialog
                   showSuccessDialog(context, 'Đăng ký dạy bù thành công.');
                 },
                 style: ElevatedButton.styleFrom(
