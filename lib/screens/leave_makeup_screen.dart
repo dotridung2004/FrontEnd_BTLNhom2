@@ -288,9 +288,11 @@ class RegisterLeaveScreen extends StatelessWidget {
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.all(16.0),
         child: ElevatedButton(
-          onPressed: () {
-            // ✅ ĐÃ THÊM: Gọi dialog
-            showSuccessDialog(context, 'Gửi yêu cầu nghỉ dạy thành công.');
+          onPressed: () async {
+            final confirmed = await showSuccessDialog(context, 'Gửi yêu cầu nghỉ dạy thành công.');
+            if (confirmed == true && context.mounted) {
+              Navigator.of(context).pop();
+            }
           },
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.blue,
@@ -422,9 +424,11 @@ class RegisterMakeupScreen extends StatelessWidget {
             const SizedBox(width: 16),
             Expanded(
               child: ElevatedButton(
-                onPressed: () {
-                  // ✅ ĐÃ THÊM: Gọi dialog
-                  showSuccessDialog(context, 'Đăng ký dạy bù thành công.');
+                onPressed: () async {
+                  final confirmed = await showSuccessDialog(context, 'Đăng ký dạy bù thành công.');
+                  if (confirmed == true && context.mounted) {
+                    Navigator.of(context).pop();
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue,
@@ -524,7 +528,13 @@ class ScheduleDetailItem extends StatelessWidget {
                     Align(
                       alignment: Alignment.bottomRight,
                       child: ElevatedButton(
-                        onPressed: () {},
+                        // ✅ ĐÃ SỬA: Thêm điều hướng
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const RegisterMakeupScreen()),
+                          );
+                        },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.red.shade100,
                           foregroundColor: Colors.red.shade800,
@@ -549,8 +559,8 @@ class ScheduleDetailItem extends StatelessWidget {
 //==================================================================
 // HÀM TÁI SỬ DỤNG ĐỂ HIỂN THỊ DIALOG THÔNG BÁO
 //==================================================================
-void showSuccessDialog(BuildContext context, String message) {
-  showDialog(
+Future<bool?> showSuccessDialog(BuildContext context, String message) {
+  return showDialog<bool>(
     context: context,
     builder: (BuildContext context) {
       return AlertDialog(
@@ -567,7 +577,7 @@ void showSuccessDialog(BuildContext context, String message) {
             IconButton(
               icon: const Icon(Icons.close),
               onPressed: () {
-                Navigator.of(context).pop();
+                Navigator.of(context).pop(false);
               },
               splashRadius: 20,
             ),
@@ -589,7 +599,7 @@ void showSuccessDialog(BuildContext context, String message) {
                 style: TextStyle(color: Colors.white, fontSize: 16),
               ),
               onPressed: () {
-                Navigator.of(context).pop();
+                Navigator.of(context).pop(true);
               },
             ),
           ),
