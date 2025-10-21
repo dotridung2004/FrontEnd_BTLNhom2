@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart'; // Thêm import
+import 'dart:io'; // Thêm import để dùng kiểu 'File'
 
 // Hàm main để chạy ứng dụng
 void main() {
@@ -25,7 +27,7 @@ class MyApp extends StatelessWidget {
 }
 
 //==================================================================
-// MÀN HÌNH 1: MÀN HÌNH NGHỈ/BÙ CHÍNH (ĐÃ CẬP NHẬT)
+// MÀN HÌNH 1: MÀN HÌNH NGHỈ/BÙ CHÍNH
 //==================================================================
 class LeaveAndMakeupScreen extends StatefulWidget {
   const LeaveAndMakeupScreen({super.key});
@@ -172,10 +174,32 @@ class _LeaveAndMakeupScreenState extends State<LeaveAndMakeupScreen> {
 }
 
 //==================================================================
-// MÀN HÌNH 2: ĐĂNG KÝ NGHỈ DẠY
+// MÀN HÌNH 2: ĐĂNG KÝ NGHỈ DẠY (ĐÃ THÊM IMAGE PICKER)
 //==================================================================
-class RegisterLeaveScreen extends StatelessWidget {
+class RegisterLeaveScreen extends StatefulWidget {
   const RegisterLeaveScreen({super.key});
+
+  @override
+  State<RegisterLeaveScreen> createState() => _RegisterLeaveScreenState();
+}
+
+class _RegisterLeaveScreenState extends State<RegisterLeaveScreen> {
+  // Biến để lưu file đã chọn
+  File? _pickedFile;
+
+  // Hàm để mở thư viện và chọn ảnh
+  Future<void> _pickFile() async {
+    final ImagePicker picker = ImagePicker();
+    // Mở thư viện ảnh
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+
+    // Nếu người dùng đã chọn ảnh
+    if (image != null) {
+      setState(() {
+        _pickedFile = File(image.path);
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -263,21 +287,45 @@ class RegisterLeaveScreen extends StatelessWidget {
               const SizedBox(height: 24),
               const Text('Minh chứng:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               const SizedBox(height: 8),
-              Container(
-                height: 120,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey.shade400, style: BorderStyle.solid, width: 1),
-                ),
-                child: const Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.upload_file, size: 40, color: Colors.grey),
-                      SizedBox(height: 8),
-                      Text('Tải ảnh hoặc file lên'),
-                    ],
+              // Khung tải file có thể nhấn được
+              GestureDetector(
+                onTap: _pickFile, // Gọi hàm chọn file khi nhấn
+                child: Container(
+                  height: 120,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.shade400, style: BorderStyle.solid, width: 1),
+                  ),
+                  child: Center(
+                    // Hiển thị giao diện khác nhau tùy thuộc vào file đã được chọn hay chưa
+                    child: _pickedFile == null
+                        ? const Column( // Giao diện mặc định
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.upload_file, size: 40, color: Colors.grey),
+                        SizedBox(height: 8),
+                        Text('Tải ảnh hoặc file lên'),
+                      ],
+                    )
+                        : Column( // Giao diện khi đã chọn file
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.check_circle, color: Colors.green, size: 40),
+                        const SizedBox(height: 8),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                          child: Text(
+                            // Hiển thị tên file
+                            _pickedFile!.path.split('/').last,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -528,7 +576,6 @@ class ScheduleDetailItem extends StatelessWidget {
                     Align(
                       alignment: Alignment.bottomRight,
                       child: ElevatedButton(
-                        // ✅ ĐÃ SỬA: Thêm điều hướng
                         onPressed: () {
                           Navigator.push(
                             context,
