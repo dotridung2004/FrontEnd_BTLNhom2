@@ -1,6 +1,9 @@
-// 👉 THÊM MỚI: Import ApiService và model User
+// 👉 THÊM MỚI CÁC IMPORT CẦN THIẾT
 import 'package:btl_nhom2/api_service.dart';
+import 'package:btl_nhom2/table/home_summary.dart';
+import 'package:btl_nhom2/table/teaching_schedule.dart';
 import 'package:btl_nhom2/table/user.dart';
+import 'package:intl/intl.dart'; // 👈 Cần cho format ngày tháng
 
 // --- Các import cũ ---
 import 'package:btl_nhom2/screens/profile_screen.dart';
@@ -22,16 +25,17 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   late final List<Widget> _widgetOptions;
 
-  // 👉 THÊM MỚI: Biến để gọi API và lưu thông tin user
   final ApiService _apiService = ApiService();
-  User? _currentUser; // Sẽ lưu thông tin user sau khi fetch
+  User? _currentUser;
 
   @override
   void initState() {
     super.initState();
 
     _widgetOptions = <Widget>[
-      const HomeScreenContent(),
+      // 👇 SỬA LẠI: Truyền userId cho HomeScreenContent
+      HomeScreenContent(userId: widget.userId),
+      // 👆
       const ScheduleScreen(),
       const AttendanceScreen(),
       const LeaveMakeupScreen(),
@@ -39,14 +43,11 @@ class _HomeScreenState extends State<HomeScreen> {
       ProfileScreen(userId: widget.userId),
     ];
 
-    // 👉 THÊM MỚI: Gọi hàm để tải thông tin user
     _fetchUserData();
   }
 
-  // 👉 THÊM MỚI: Hàm lấy dữ liệu user từ API
   Future<void> _fetchUserData() async {
     try {
-      // ✅ SỬA LẠI: Gọi đúng tên hàm là "fetchUserById"
       final user = await _apiService.fetchUserById(widget.userId);
       if (mounted) {
         setState(() {
@@ -64,9 +65,7 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  // 👉 THÊM MỚI: Widget để xây dựng Avatar động
   Widget _buildUserAvatar() {
-    // Trường hợp 1: Đang tải dữ liệu (user chưa có)
     if (_currentUser == null) {
       return const Padding(
         padding: EdgeInsets.symmetric(horizontal: 16.0),
@@ -81,14 +80,10 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
-    // Trường hợp 2: Đã tải xong (Áp dụng logic từ ProfileScreen)
-
-    // Lấy ảnh từ URL
     final avatar = (_currentUser!.avatarUrl?.isNotEmpty ?? false)
         ? NetworkImage(_currentUser!.avatarUrl!)
         : null;
 
-    // Lấy chữ cái đầu (dự phòng)
     final String initial = _currentUser!.name.isNotEmpty
         ? _currentUser!.name[0].toUpperCase()
         : 'U';
@@ -97,13 +92,13 @@ class _HomeScreenState extends State<HomeScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: CircleAvatar(
         backgroundColor: Colors.blue.shade700,
-        backgroundImage: avatar, // 👈 Thử tải ảnh
-        child: avatar == null // 👈 Nếu không có ảnh...
-            ? Text( // 👈 ...thì mới hiện chữ
+        backgroundImage: avatar,
+        child: avatar == null
+            ? Text(
           initial,
           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
         )
-            : null, // 👈 Nếu có ảnh thì không hiện chữ
+            : null,
       ),
     );
   }
@@ -144,10 +139,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
-
-          // 👉 THAY ĐỔI: Sử dụng widget _buildUserAvatar()
           _buildUserAvatar(),
-
         ],
       ),
       body: _widgetOptions.elementAt(_selectedIndex),
@@ -170,59 +162,158 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-// ... (Các widget bên dưới: HomeScreenContent, SummaryCard, ScheduleCard giữ nguyên) ...
+// ... (Widget SummaryCard và ScheduleCard giữ nguyên) ...
 
-class HomeScreenContent extends StatelessWidget {
-  const HomeScreenContent({super.key});
+
+// --- ⬇️ WIDGET ĐƯỢC CẬP NHẬT ⬇️ ---
+
+class HomeScreenContent extends StatefulWidget {
+  // 👉 Thêm dòng này để nhận userId
+  final int userId;
+
+  const HomeScreenContent({super.key, required this.userId});
+
+  @override
+  State<HomeScreenContent> createState() => _HomeScreenContentState();
+}
+
+class _HomeScreenContentState extends State<HomeScreenContent> {
+  // 👉 Khai báo ApiService và Future
+  final ApiService _apiService = ApiService();
+  late Future<HomeSummary> _homeSummaryFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    // 👉 Gọi API khi widget được khởi tạo
+    _homeSummaryFuture = _apiService.fetchHomeSummary(widget.userId);
+  }
+
+  // 👉 Helper để lấy màu dựa trên status
+  Color _getStatusColor(String status) {
+    if (status == 'Đang diễn ra') return Colors.green;
+    if (status == 'Sắp diễn ra') return Colors.orange;
+    if (status == 'Đã kết thúc') return Colors.grey;
+    return Colors.blue; // Mặc định
+  }
+
+  // 👉 Helper để format ngày tháng
+  String _getTodayDate() {
+    // Note: Cần import 'package:intl/intl.dart';
+    // Đặt locale 'vi' để có Thứ
+    final now = DateTime.now();
+    return DateFormat(' (EEEE, dd/MM/yyyy)', 'vi_VN').format(now);
+  }
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.all(16.0),
-      children: [
-        const Text('Teaching Schedule', style: TextStyle(fontSize: 16, color: Colors.grey)),
-        const SizedBox(height: 16),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: const [
-            SummaryCard(value: '6', label: 'Tiết hôm nay'),
-            SummaryCard(value: '15', label: 'Tiết tuần này'),
-            SummaryCard(value: '0%', label: 'Hoàn thành'),
+    // 👉 Dùng FutureBuilder để xử lý 3 trạng thái: loading, error, success
+    return FutureBuilder<HomeSummary>(
+      future: _homeSummaryFuture,
+      builder: (context, snapshot) {
+
+        // 1. TRẠNG THÁI LOADING (Đang tải)
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        // 2. TRẠNG THÁI LỖI
+        if (snapshot.hasError) {
+          return Center(
+            child: Text(
+              'Lỗi tải dữ liệu: ${snapshot.error}',
+              style: const TextStyle(color: Colors.red),
+            ),
+          );
+        }
+
+        // 3. TRẠNG THÁI THÀNH CÔNG
+        if (!snapshot.hasData) {
+          return const Center(child: Text('Không có dữ liệu.'));
+        }
+
+        // ✅ Lấy dữ liệu đã parse thành công
+        final homeData = snapshot.data!;
+        final summary = homeData; // Đổi tên cho ngắn gọn
+        final schedules = homeData.schedules;
+
+        // Trả về ListView với dữ liệu động
+        return ListView(
+          padding: const EdgeInsets.all(16.0),
+          children: [
+            const Text('Teaching Schedule', style: TextStyle(fontSize: 16, color: Colors.grey)),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // 👇 Dữ liệu động cho SummaryCard
+                SummaryCard(
+                    value: summary.todayLessons.toString(),
+                    label: 'Tiết hôm nay'
+                ),
+                SummaryCard(
+                    value: summary.weekLessons.toString(),
+                    label: 'Tiết tuần này'
+                ),
+                SummaryCard(
+                    value: '${summary.completionPercent.toStringAsFixed(0)}%',
+                    label: 'Hoàn thành'
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                const Text('Lịch dạy hôm nay', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                // 👇 Ngày tháng động
+                Text(
+                    _getTodayDate(),
+                    style: const TextStyle(fontSize: 16, color: Colors.grey)
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // Nếu không có lịch, hiển thị thông báo
+            if (schedules.isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 40.0),
+                child: Center(
+                  child: Text(
+                    '🎉 Bạn không có lịch dạy hôm nay.',
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                  ),
+                ),
+              ),
+
+            // 👇 Dùng Column + for-loop để tạo danh sách ScheduleCard
+            Column(
+              children: [
+                for (final schedule in schedules)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16.0),
+                    child: ScheduleCard(
+                      time: schedule.time,
+                      lessons: schedule.lessons,
+                      title: schedule.title,
+                      courseCode: schedule.courseCode,
+                      location: schedule.location,
+                      status: schedule.status,
+                      // 👇 Lấy màu động
+                      statusColor: _getStatusColor(schedule.status),
+                      borderColor: _getStatusColor(schedule.status),
+                    ),
+                  ),
+              ],
+            )
           ],
-        ),
-        const SizedBox(height: 24),
-        Row(
-          children: const [
-            Text('Lịch dạy hôm nay', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            Text(' (Thứ 5, Ngày 18/9/2025)', style: TextStyle(fontSize: 16, color: Colors.grey)),
-          ],
-        ),
-        const SizedBox(height: 16),
-        const ScheduleCard(
-          time: '7:00 - 9:40',
-          lessons: 'Tiết 1-3',
-          title: 'Phát triển ứng dụng cho các thiết bị di động-1-25',
-          courseCode: '(CSE441_001)',
-          location: '210 - B5',
-          status: 'Đang diễn ra',
-          statusColor: Colors.green,
-          borderColor: Colors.green,
-        ),
-        const SizedBox(height: 16),
-        const ScheduleCard(
-          time: '9:45 - 12:25',
-          lessons: 'Tiết 4-6',
-          title: 'Phát triển ứng dụng cho các thiết bị di động-1-25',
-          courseCode: '(CSE441_002)',
-          location: '207 - B5',
-          status: 'Sắp diễn ra',
-          statusColor: Colors.orange,
-          borderColor: Colors.orange,
-        ),
-      ],
+        );
+      },
     );
   }
 }
+
+// --- ⬆️ KẾT THÚC SỬA ⬆️ ---
 
 
 class SummaryCard extends StatelessWidget {
