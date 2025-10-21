@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
+
+// 👇 THÊM 3 IMPORT
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../api_service.dart'; // 👈 import ApiService
+
+//
 import '../table/user.dart'; // 👈 import model User
 import 'home_screen.dart';
 
@@ -12,7 +18,6 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  // Sửa tên controller cho đúng chức năng (email)
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _rememberMe = false;
@@ -20,6 +25,40 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
 
   final ApiService _apiService = ApiService();
+  // 👇 KHỞI TẠO BỘ LƯU TRỮ AN TOÀN
+  final _storage = const FlutterSecureStorage();
+
+  @override
+  void initState() {
+    super.initState();
+    // 👇 Gọi hàm tải dữ liệu đã lưu khi màn hình khởi động
+    _loadSavedCredentials();
+  }
+
+  /// ---------------------------------------------------
+  /// 🌍 HÀM MỚI: Tải dữ liệu đã lưu
+  /// ---------------------------------------------------
+  Future<void> _loadSavedCredentials() async {
+    final prefs = await SharedPreferences.getInstance();
+    // Lấy trạng thái checkbox "remember me"
+    final bool remembered = prefs.getBool('rememberMe') ?? false;
+
+    setState(() {
+      _rememberMe = remembered;
+    });
+
+    if (_rememberMe) {
+      // Nếu đã lưu, lấy email và password từ bộ nhớ an toàn
+      final email = await _storage.read(key: 'email');
+      final password = await _storage.read(key: 'password');
+      if (email != null && password != null) {
+        setState(() {
+          _emailController.text = email;
+          _passwordController.text = password;
+        });
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -28,64 +67,68 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  // SỬA LẠI LOGIC ĐĂNG NHẬP CHO ĐÚNG
+  /// ---------------------------------------------------
+  /// 🔄 CẬP NHẬT: Hàm xử lý đăng nhập
+  /// ---------------------------------------------------
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
 
-    try {
-      final email = _emailController.text.trim();
-      final password = _passwordController.text.trim();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+    final prefs = await SharedPreferences.getInstance();
 
+    try {
       final user = await _apiService.login(email, password);
 
-      // Nếu API không báo lỗi, nghĩa là đăng nhập thành công
+      // --- 👇 LOGIC LƯU TRỮ MỚI 👇 ---
+      // Lưu trạng thái checkbox
+      await prefs.setBool('rememberMe', _rememberMe);
+
+      if (_rememberMe) {
+        // Nếu "Ghi nhớ" được chọn, LƯU email và password
+        await _storage.write(key: 'email', value: email);
+        await _storage.write(key: 'password', value: password);
+      } else {
+        // Nếu không, XÓA mọi thông tin đã lưu
+        await _storage.delete(key: 'email');
+        await _storage.delete(key: 'password');
+      }
+      // --- 👆 KẾT THÚC LOGIC LƯU TRỮ 👆 ---
+
+      // Đăng nhập thành công, chuyển màn hình
       if (mounted) {
-        // ✅ SỬA LẠI:
-        // Bỏ Future.delayed và Navigator.pop() vì không còn
-        // hiển thị dialog thành công nữa.
-        // Chỉ cần gọi pushReplacement là đủ.
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            // Truyền userId đã lấy được sang HomeScreen
             builder: (context) => HomeScreen(userId: user.id),
           ),
         );
       }
     } catch (e) {
-      // Nếu API báo lỗi (sai email/password), nó sẽ nhảy vào đây
+      // Nếu API báo lỗi (sai email/pass, bị khóa,...), hiển thị lỗi
       debugPrint('Lỗi đăng nhập: $e');
-      if (mounted) _showErrorDialog();
+      if (mounted) {
+        // 👇 SỬA LẠI: Truyền thông báo lỗi động
+        _showErrorDialog(e.toString());
+      }
     } finally {
-      // Đảm bảo `if (mounted)` trước khi gọi setState trong finally
       if (mounted) {
         setState(() => _isLoading = false);
       }
     }
   }
 
-  // void _showSuccessDialog() {
-  //   showDialog(
-  //     context: context,
-  //     barrierDismissible: false,
-  //     builder: (context) => const AlertDialog(
-  //       shape: RoundedRectangleBorder(
-  //           borderRadius: BorderRadius.all(Radius.circular(20))),
-  //       title: Row(
-  //         children: [
-  //           Icon(Icons.check_circle, color: Color(0xFF10b981), size: 28),
-  //           SizedBox(width: 12),
-  //           Text('Đăng nhập thành công!'),
-  //         ],
-  //       ),
-  //       content: Text('Chào mừng bạn trở lại!'),
-  //     ),
-  //   );
-  // }
+  /// ---------------------------------------------------
+  /// 🔄 CẬP NHẬT: Hiển thị lỗi động
+  /// ---------------------------------------------------
+  void _showErrorDialog(String errorMessage) {
+    // Làm sạch thông báo lỗi (bỏ "Exception: " và "❌ ")
+    final displayMessage = errorMessage
+        .replaceFirst('Exception: ', '')
+        .replaceAll('❌ ', '');
 
-  void _showErrorDialog() {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -98,8 +141,10 @@ class _LoginScreenState extends State<LoginScreen> {
             Text('Đăng nhập thất bại'),
           ],
         ),
-        content: const Text(
-          'Email hoặc mật khẩu không chính xác.\n\nVui lòng thử lại.',
+        // 👇 SỬA LẠI: Hiển thị lỗi thực tế từ API
+        content: Text(
+          displayMessage,
+          style: const TextStyle(height: 1.5),
         ),
         actions: [
           TextButton(
@@ -110,6 +155,8 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
+
+  // --- (Các hàm build() và widget khác giữ nguyên) ---
 
   @override
   Widget build(BuildContext context) {

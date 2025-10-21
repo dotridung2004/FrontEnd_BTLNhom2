@@ -5,7 +5,7 @@ import 'table/user.dart';
 // 👉 THÊM MỚI 2 IMPORTS
 import 'table/home_summary.dart';
 import 'table/teaching_schedule.dart';
-
+import 'table/schedule_week_data.dart';
 
 class ApiService {
   // Sửa baseUrl để trỏ vào Docker từ máy ảo Android
@@ -109,6 +109,19 @@ class ApiService {
     final response = await http.delete(Uri.parse('$baseUrl/users/$id'));
     if (response.statusCode != 204) {
       throw Exception('❌ Xóa user thất bại');
+    }
+  }
+  Future<ScheduleWeekData> fetchScheduleData(int userId, int weekOffset) async {
+    // API endpoint mới, ví dụ: /users/35/schedule-data?week_offset=0
+    final response = await http.get(
+      Uri.parse('$baseUrl/users/$userId/schedule-data?week_offset=$weekOffset'),
+    );
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> data = jsonDecode(response.body);
+      return ScheduleWeekData.fromJson(data);
+    } else {
+      throw Exception('❌ Lỗi khi tải dữ liệu lịch dạy');
     }
   }
 }

@@ -36,7 +36,7 @@ class _HomeScreenState extends State<HomeScreen> {
       // 👇 SỬA LẠI: Truyền userId cho HomeScreenContent
       HomeScreenContent(userId: widget.userId),
       // 👆
-      const ScheduleScreen(),
+      ScheduleScreen(userId: widget.userId),
       const AttendanceScreen(),
       const LeaveMakeupScreen(),
       const ReportScreen(),
