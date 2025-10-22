@@ -356,23 +356,23 @@ class RegisterMakeupScreen extends StatefulWidget {
 }
 
 class _RegisterMakeupScreenState extends State<RegisterMakeupScreen> {
-  // Biến để lưu ngày được chọn
   DateTime? _selectedDate;
-  // Controller để hiển thị ngày trong TextField
   final TextEditingController _dateController = TextEditingController();
 
-  // Hàm hiển thị lịch chọn ngày
+  // Biến để lưu ca và phòng đã chọn
+  String? _selectedShift;
+  String? _selectedRoom;
+
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: _selectedDate ?? DateTime.now(),
-      firstDate: DateTime(2020), // Năm bắt đầu
-      lastDate: DateTime(2030), // Năm kết thúc
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2030),
     );
     if (picked != null && picked != _selectedDate) {
       setState(() {
         _selectedDate = picked;
-        // Định dạng ngày thành "dd/mm/yyyy" và cập nhật TextField
         _dateController.text = "${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}";
       });
     }
@@ -380,13 +380,16 @@ class _RegisterMakeupScreenState extends State<RegisterMakeupScreen> {
 
   @override
   void dispose() {
-    // Hủy controller khi widget bị loại bỏ để tránh rò rỉ bộ nhớ
     _dateController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    // Danh sách các lựa chọn cho ca học và phòng học
+    final List<String> shifts = ['Ca 1: 7:00-9:40', 'Ca 2: 9:45-12:20'];
+    final List<String> rooms = ['Phòng 207-B5', 'Phòng 210-B5'];
+
     return Scaffold(
       backgroundColor: Colors.grey[200],
       appBar: AppBar(
@@ -460,7 +463,7 @@ class _RegisterMakeupScreenState extends State<RegisterMakeupScreen> {
               const SizedBox(height: 8),
               GestureDetector(
                 onTap: () => _selectDate(context),
-                child: AbsorbPointer( // Ngăn không cho người dùng gõ chữ vào
+                child: AbsorbPointer(
                   child: TextField(
                     controller: _dateController,
                     decoration: InputDecoration(
@@ -475,9 +478,31 @@ class _RegisterMakeupScreenState extends State<RegisterMakeupScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              _buildDropdownField('Chọn ca dạy bù:', 'Ca 1: 7:00-9:40'),
+              // Trường chọn ca dạy bù (Dropdown)
+              _buildDropdownField(
+                label: 'Chọn ca dạy bù:',
+                hint: 'Chọn một ca học',
+                value: _selectedShift,
+                items: shifts,
+                onChanged: (newValue) {
+                  setState(() {
+                    _selectedShift = newValue;
+                  });
+                },
+              ),
               const SizedBox(height: 16),
-              _buildDropdownField('Chọn phòng học:', 'Phòng 207-B5'),
+              // Trường chọn phòng học (Dropdown)
+              _buildDropdownField(
+                label: 'Chọn phòng học:',
+                hint: 'Chọn một phòng học',
+                value: _selectedRoom,
+                items: rooms,
+                onChanged: (newValue) {
+                  setState(() {
+                    _selectedRoom = newValue;
+                  });
+                },
+              ),
               const SizedBox(height: 16),
               const Text('Ghi chú:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               const SizedBox(height: 8),
@@ -535,8 +560,14 @@ class _RegisterMakeupScreenState extends State<RegisterMakeupScreen> {
     );
   }
 
-  // Widget helper cho các ô dropdown
-  Widget _buildDropdownField(String label, String hint) {
+  // Widget helper cho các ô dropdown động
+  Widget _buildDropdownField({
+    required String label,
+    required String hint,
+    required String? value,
+    required List<String> items,
+    required ValueChanged<String?> onChanged,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -550,18 +581,18 @@ class _RegisterMakeupScreenState extends State<RegisterMakeupScreen> {
             border: Border.all(color: Colors.grey.shade300),
           ),
           child: DropdownButtonFormField<String>(
-            value: null,
-            hint: Text(hint, style: const TextStyle(color: Colors.black54)),
+            value: value,
+            hint: Text(hint, style: const TextStyle(color: Colors.grey)),
             decoration: const InputDecoration(
-              border: InputBorder.none, // Bỏ đường gạch chân
+              border: InputBorder.none,
             ),
-            items: [
-              // Bạn có thể thêm các DropdownMenuItem ở đây
-              // Ví dụ: DropdownMenuItem(value: 'ca1', child: Text('Ca 1: 7:00-9:40')),
-            ],
-            onChanged: (String? newValue) {
-              // Xử lý khi người dùng chọn một mục
-            },
+            items: items.map((String item) {
+              return DropdownMenuItem<String>(
+                value: item,
+                child: Text(item),
+              );
+            }).toList(),
+            onChanged: onChanged,
           ),
         ),
       ],
