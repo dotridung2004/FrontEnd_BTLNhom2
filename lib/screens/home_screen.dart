@@ -1,5 +1,3 @@
-// lib/screens/home_screen.dart
-
 // 👉 THÊM MỚI: Import ApiService và model User
 import 'package:btl_nhom2/api_service.dart';
 import 'package:btl_nhom2/table/user.dart';
@@ -9,7 +7,7 @@ import 'package:btl_nhom2/screens/profile_screen.dart';
 import 'package:btl_nhom2/screens/schedule_screen.dart';
 import 'package:flutter/material.dart';
 import 'report_screen.dart';
-import 'leave_makeup_screen.dart'; // ✅ ĐÃ THÊM DÒNG NÀY
+import 'leave_makeup_screen.dart';
 import 'attendance_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -36,7 +34,7 @@ class _HomeScreenState extends State<HomeScreen> {
       const HomeScreenContent(),
       const ScheduleScreen(),
       const AttendanceScreen(),
-      const LeaveAndMakeupScreen(), // Dòng 37 gây lỗi đây, giờ sẽ hoạt động
+      const LeaveMakeupScreen(),
       const ReportScreen(),
       ProfileScreen(userId: widget.userId),
     ];
