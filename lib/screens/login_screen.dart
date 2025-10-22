@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
-
-// 👇 THÊM 3 IMPORT
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../api_service.dart'; // 👈 import ApiService
 
-//
-import '../table/user.dart'; // 👈 import model User
-import 'home_screen.dart';
+// Import các file cần thiết
+import '../api_service.dart';
+import '../table/user.dart';
+import 'home_screen.dart'; // Màn hình cho Giáo viên
+import 'student_home_screen.dart'; // 👈 *** THÊM IMPORT CHO MÀN HÌNH SINH VIÊN ***
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -25,33 +24,28 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
 
   final ApiService _apiService = ApiService();
-  // 👇 KHỞI TẠO BỘ LƯU TRỮ AN TOÀN
   final _storage = const FlutterSecureStorage();
 
   @override
   void initState() {
     super.initState();
-    // 👇 Gọi hàm tải dữ liệu đã lưu khi màn hình khởi động
     _loadSavedCredentials();
   }
 
-  /// ---------------------------------------------------
-  /// 🌍 HÀM MỚI: Tải dữ liệu đã lưu
-  /// ---------------------------------------------------
   Future<void> _loadSavedCredentials() async {
     final prefs = await SharedPreferences.getInstance();
-    // Lấy trạng thái checkbox "remember me"
     final bool remembered = prefs.getBool('rememberMe') ?? false;
 
-    setState(() {
-      _rememberMe = remembered;
-    });
+    if (mounted) {
+      setState(() {
+        _rememberMe = remembered;
+      });
+    }
 
-    if (_rememberMe) {
-      // Nếu đã lưu, lấy email và password từ bộ nhớ an toàn
+    if (remembered) {
       final email = await _storage.read(key: 'email');
       final password = await _storage.read(key: 'password');
-      if (email != null && password != null) {
+      if (mounted && email != null && password != null) {
         setState(() {
           _emailController.text = email;
           _passwordController.text = password;
@@ -68,7 +62,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   /// ---------------------------------------------------
-  /// 🔄 CẬP NHẬT: Hàm xử lý đăng nhập
+  /// 🔄 CẬP NHẬT: Hàm xử lý đăng nhập và điều hướng
   /// ---------------------------------------------------
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
@@ -80,37 +74,51 @@ class _LoginScreenState extends State<LoginScreen> {
     final prefs = await SharedPreferences.getInstance();
 
     try {
+      // 1. Gọi API login, API sẽ kiểm tra status
       final user = await _apiService.login(email, password);
 
-      // --- 👇 LOGIC LƯU TRỮ MỚI 👇 ---
-      // Lưu trạng thái checkbox
+      // --- Logic lưu trữ "Ghi nhớ" ---
       await prefs.setBool('rememberMe', _rememberMe);
-
       if (_rememberMe) {
-        // Nếu "Ghi nhớ" được chọn, LƯU email và password
         await _storage.write(key: 'email', value: email);
         await _storage.write(key: 'password', value: password);
       } else {
-        // Nếu không, XÓA mọi thông tin đã lưu
         await _storage.delete(key: 'email');
         await _storage.delete(key: 'password');
       }
-      // --- 👆 KẾT THÚC LOGIC LƯU TRỮ 👆 ---
+      // --- Kết thúc logic lưu trữ ---
 
-      // Đăng nhập thành công, chuyển màn hình
+      // 2. Kiểm tra vai trò và điều hướng đến màn hình tương ứng
       if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => HomeScreen(userId: user.id),
-          ),
-        );
+        if (user.role == 'teacher') {
+          // ---------------------------------
+          // 👉 ĐIỀU HƯỚNG TỚI TRANG GIÁO VIÊN
+          // ---------------------------------
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => HomeScreen(userId: user.id),
+            ),
+          );
+        } else if (user.role == 'student') {
+          // ---------------------------------
+          // 👉 ĐIỀU HƯỚNG TỚI TRANG SINH VIÊN
+          // ---------------------------------
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => StudentHomeScreen(userId: user.id),
+            ),
+          );
+        } else {
+          // Xử lý các vai trò khác không được hỗ trợ
+          throw Exception('Vai trò của bạn không được hỗ trợ để đăng nhập vào ứng dụng này.');
+        }
       }
     } catch (e) {
-      // Nếu API báo lỗi (sai email/pass, bị khóa,...), hiển thị lỗi
+      // Bắt tất cả các lỗi (sai pass, bị khóa, không kết nối được, vai trò không hợp lệ,...)
       debugPrint('Lỗi đăng nhập: $e');
       if (mounted) {
-        // 👇 SỬA LẠI: Truyền thông báo lỗi động
         _showErrorDialog(e.toString());
       }
     } finally {
@@ -120,20 +128,12 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  /// ---------------------------------------------------
-  /// 🔄 CẬP NHẬT: Hiển thị lỗi động
-  /// ---------------------------------------------------
   void _showErrorDialog(String errorMessage) {
-    // Làm sạch thông báo lỗi (bỏ "Exception: " và "❌ ")
-    final displayMessage = errorMessage
-        .replaceFirst('Exception: ', '')
-        .replaceAll('❌ ', '');
-
+    final displayMessage = errorMessage.replaceFirst('Exception: ', '').replaceAll('❌ ', '');
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(20))),
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(20))),
         title: const Row(
           children: [
             Icon(Icons.error_outline, color: Color(0xFFef4444), size: 28),
@@ -141,7 +141,6 @@ class _LoginScreenState extends State<LoginScreen> {
             Text('Đăng nhập thất bại'),
           ],
         ),
-        // 👇 SỬA LẠI: Hiển thị lỗi thực tế từ API
         content: Text(
           displayMessage,
           style: const TextStyle(height: 1.5),
@@ -156,10 +155,11 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // --- (Các hàm build() và widget khác giữ nguyên) ---
+  // --- (Các hàm build() và widget khác giữ nguyên, không cần thay đổi) ---
 
   @override
   Widget build(BuildContext context) {
+    // ... Toàn bộ code giao diện của bạn giữ nguyên ...
     return Scaffold(
       body: Container(
         width: double.infinity,
@@ -195,7 +195,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     const SizedBox(height: 40),
-                    // Sửa lại TextField để nhập Email
                     _buildTextField(
                       controller: _emailController,
                       hintText: 'Email',
