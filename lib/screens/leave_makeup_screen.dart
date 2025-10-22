@@ -703,7 +703,7 @@ Future<bool?> showSuccessDialog(BuildContext context, String message) {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text(
-              ' báo!',
+              'Thông báo!',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             IconButton(
