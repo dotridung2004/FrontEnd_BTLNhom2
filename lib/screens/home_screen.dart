@@ -1,13 +1,12 @@
-// 👉 THÊM MỚI: Import ApiService và model User
+// lib/screens/home_screen.dart
+
 import 'package:btl_nhom2/api_service.dart';
 import 'package:btl_nhom2/table/user.dart';
-
-// --- Các import cũ ---
 import 'package:btl_nhom2/screens/profile_screen.dart';
 import 'package:btl_nhom2/screens/schedule_screen.dart';
 import 'package:flutter/material.dart';
 import 'report_screen.dart';
-import 'leave_makeup_screen.dart';
+import 'leave_makeup_screen.dart'; // ✅ ĐÃ THÊM DÒNG NÀY
 import 'attendance_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -22,31 +21,28 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   late final List<Widget> _widgetOptions;
 
-  // 👉 THÊM MỚI: Biến để gọi API và lưu thông tin user
   final ApiService _apiService = ApiService();
-  User? _currentUser; // Sẽ lưu thông tin user sau khi fetch
+  User? _currentUser;
 
   @override
   void initState() {
     super.initState();
 
+    // ✅ ĐÃ SỬA LỖI: Chỉ truyền userId cho ProfileScreen
     _widgetOptions = <Widget>[
-      const HomeScreenContent(),
-      const ScheduleScreen(),
-      const AttendanceScreen(),
-      const LeaveMakeupScreen(),
-      const ReportScreen(),
-      ProfileScreen(userId: widget.userId),
+      const HomeScreenContent(),      // Index 0
+      const ScheduleScreen(),         // Index 1
+      const AttendanceScreen(),       // Index 2
+      const LeaveMakeupScreen(),      // Index 3
+      const ReportScreen(),           // Index 4
+      ProfileScreen(userId: widget.userId), // Index 5 (Không có const)
     ];
 
-    // 👉 THÊM MỚI: Gọi hàm để tải thông tin user
     _fetchUserData();
   }
 
-  // 👉 THÊM MỚI: Hàm lấy dữ liệu user từ API
   Future<void> _fetchUserData() async {
     try {
-      // ✅ SỬA LẠI: Gọi đúng tên hàm là "fetchUserById"
       final user = await _apiService.fetchUserById(widget.userId);
       if (mounted) {
         setState(() {
@@ -64,9 +60,7 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  // 👉 THÊM MỚI: Widget để xây dựng Avatar động
   Widget _buildUserAvatar() {
-    // Trường hợp 1: Đang tải dữ liệu (user chưa có)
     if (_currentUser == null) {
       return const Padding(
         padding: EdgeInsets.symmetric(horizontal: 16.0),
@@ -81,14 +75,10 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
-    // Trường hợp 2: Đã tải xong (Áp dụng logic từ ProfileScreen)
-
-    // Lấy ảnh từ URL
     final avatar = (_currentUser!.avatarUrl?.isNotEmpty ?? false)
         ? NetworkImage(_currentUser!.avatarUrl!)
         : null;
 
-    // Lấy chữ cái đầu (dự phòng)
     final String initial = _currentUser!.name.isNotEmpty
         ? _currentUser!.name[0].toUpperCase()
         : 'U';
@@ -97,13 +87,13 @@ class _HomeScreenState extends State<HomeScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: CircleAvatar(
         backgroundColor: Colors.blue.shade700,
-        backgroundImage: avatar, // 👈 Thử tải ảnh
-        child: avatar == null // 👈 Nếu không có ảnh...
-            ? Text( // 👈 ...thì mới hiện chữ
+        backgroundImage: avatar,
+        child: avatar == null
+            ? Text(
           initial,
           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
         )
-            : null, // 👈 Nếu có ảnh thì không hiện chữ
+            : null,
       ),
     );
   }
@@ -144,10 +134,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
-
-          // 👉 THAY ĐỔI: Sử dụng widget _buildUserAvatar()
           _buildUserAvatar(),
-
         ],
       ),
       body: _widgetOptions.elementAt(_selectedIndex),
