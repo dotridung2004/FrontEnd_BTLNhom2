@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart'; // Thêm import
-import 'dart:io'; // Thêm import để dùng kiểu 'File'
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 // Hàm main để chạy ứng dụng
 void main() {
@@ -43,18 +43,17 @@ class _LeaveAndMakeupScreenState extends State<LeaveAndMakeupScreen> {
 
     return Scaffold(
       backgroundColor: Colors.grey[200],
-      body: SafeArea( // Thêm SafeArea để nội dung không bị tràn lên thanh trạng thái
+      body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               children: [
-                // ===== PHẦN ĐÃ PHÓNG TO =====
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20), // Tăng padding
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(16), // Tăng bo góc
+                    borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: Colors.grey.shade300),
                     boxShadow: [
                       BoxShadow(
@@ -68,12 +67,11 @@ class _LeaveAndMakeupScreenState extends State<LeaveAndMakeupScreen> {
                   child: const Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Buổi đã nghỉ: 1', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)), // Tăng cỡ chữ
-                      Text('Buổi cần bù:1', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)), // Tăng cỡ chữ
+                      Text('Buổi đã nghỉ: 1', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                      Text('Buổi cần bù:1', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                     ],
                   ),
                 ),
-                // ===== KẾT THÚC PHẦN PHÓNG TO =====
                 const SizedBox(height: 20),
                 Row(
                   children: [
@@ -174,7 +172,7 @@ class _LeaveAndMakeupScreenState extends State<LeaveAndMakeupScreen> {
 }
 
 //==================================================================
-// MÀN HÌNH 2: ĐĂNG KÝ NGHỈ DẠY (ĐÃ THÊM IMAGE PICKER)
+// MÀN HÌNH 2: ĐĂNG KÝ NGHỈ DẠY
 //==================================================================
 class RegisterLeaveScreen extends StatefulWidget {
   const RegisterLeaveScreen({super.key});
@@ -184,16 +182,12 @@ class RegisterLeaveScreen extends StatefulWidget {
 }
 
 class _RegisterLeaveScreenState extends State<RegisterLeaveScreen> {
-  // Biến để lưu file đã chọn
   File? _pickedFile;
 
-  // Hàm để mở thư viện và chọn ảnh
   Future<void> _pickFile() async {
     final ImagePicker picker = ImagePicker();
-    // Mở thư viện ảnh
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
 
-    // Nếu người dùng đã chọn ảnh
     if (image != null) {
       setState(() {
         _pickedFile = File(image.path);
@@ -287,9 +281,8 @@ class _RegisterLeaveScreenState extends State<RegisterLeaveScreen> {
               const SizedBox(height: 24),
               const Text('Minh chứng:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               const SizedBox(height: 8),
-              // Khung tải file có thể nhấn được
               GestureDetector(
-                onTap: _pickFile, // Gọi hàm chọn file khi nhấn
+                onTap: _pickFile,
                 child: Container(
                   height: 120,
                   width: double.infinity,
@@ -299,9 +292,8 @@ class _RegisterLeaveScreenState extends State<RegisterLeaveScreen> {
                     border: Border.all(color: Colors.grey.shade400, style: BorderStyle.solid, width: 1),
                   ),
                   child: Center(
-                    // Hiển thị giao diện khác nhau tùy thuộc vào file đã được chọn hay chưa
                     child: _pickedFile == null
-                        ? const Column( // Giao diện mặc định
+                        ? const Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(Icons.upload_file, size: 40, color: Colors.grey),
@@ -309,7 +301,7 @@ class _RegisterLeaveScreenState extends State<RegisterLeaveScreen> {
                         Text('Tải ảnh hoặc file lên'),
                       ],
                     )
-                        : Column( // Giao diện khi đã chọn file
+                        : Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Icon(Icons.check_circle, color: Colors.green, size: 40),
@@ -317,7 +309,6 @@ class _RegisterLeaveScreenState extends State<RegisterLeaveScreen> {
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16.0),
                           child: Text(
-                            // Hiển thị tên file
                             _pickedFile!.path.split('/').last,
                             textAlign: TextAlign.center,
                             style: const TextStyle(fontWeight: FontWeight.bold),
@@ -355,10 +346,44 @@ class _RegisterLeaveScreenState extends State<RegisterLeaveScreen> {
 }
 
 //==================================================================
-// MÀN HÌNH 3: ĐĂNG KÝ DẠY BÙ
+// MÀN HÌNH 3: ĐĂNG KÝ DẠY BÙ (✅ ĐÃ SỬA)
 //==================================================================
-class RegisterMakeupScreen extends StatelessWidget {
+class RegisterMakeupScreen extends StatefulWidget {
   const RegisterMakeupScreen({super.key});
+
+  @override
+  State<RegisterMakeupScreen> createState() => _RegisterMakeupScreenState();
+}
+
+class _RegisterMakeupScreenState extends State<RegisterMakeupScreen> {
+  // Biến để lưu ngày được chọn
+  DateTime? _selectedDate;
+  // Controller để hiển thị ngày trong TextField
+  final TextEditingController _dateController = TextEditingController();
+
+  // Hàm hiển thị lịch chọn ngày
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate ?? DateTime.now(),
+      firstDate: DateTime(2020), // Năm bắt đầu
+      lastDate: DateTime(2030), // Năm kết thúc
+    );
+    if (picked != null && picked != _selectedDate) {
+      setState(() {
+        _selectedDate = picked;
+        // Định dạng ngày thành "dd/mm/yyyy" và cập nhật TextField
+        _dateController.text = "${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}";
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    // Hủy controller khi widget bị loại bỏ để tránh rò rỉ bộ nhớ
+    _dateController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -430,11 +455,29 @@ class RegisterMakeupScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 24),
-              _buildTextFieldWithLabel('Chọn ngày dạy bù:', 'dd/mm/yyyy', icon: Icons.calendar_today),
+              // Trường chọn ngày
+              const Text('Chọn ngày dạy bù:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              const SizedBox(height: 8),
+              GestureDetector(
+                onTap: () => _selectDate(context),
+                child: AbsorbPointer( // Ngăn không cho người dùng gõ chữ vào
+                  child: TextField(
+                    controller: _dateController,
+                    decoration: InputDecoration(
+                      hintText: 'dd/mm/yyyy',
+                      filled: true,
+                      fillColor: Colors.white,
+                      suffixIcon: const Icon(Icons.calendar_today, color: Colors.grey),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
+                    ),
+                  ),
+                ),
+              ),
               const SizedBox(height: 16),
-              _buildTextFieldWithLabel('Chọn ca dạy bù:', 'Ca 1: 7:00-9:40', icon: Icons.arrow_drop_down),
+              _buildDropdownField('Chọn ca dạy bù:', 'Ca 1: 7:00-9:40'),
               const SizedBox(height: 16),
-              _buildTextFieldWithLabel('Chọn phòng học:', 'Phòng 207-B5', icon: Icons.arrow_drop_down),
+              _buildDropdownField('Chọn phòng học:', 'Phòng 207-B5'),
               const SizedBox(height: 16),
               const Text('Ghi chú:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               const SizedBox(height: 8),
@@ -492,21 +535,33 @@ class RegisterMakeupScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTextFieldWithLabel(String label, String hint, {required IconData icon}) {
+  // Widget helper cho các ô dropdown
+  Widget _buildDropdownField(String label, String hint) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
         const SizedBox(height: 8),
-        TextField(
-          readOnly: true,
-          decoration: InputDecoration(
-            hintText: hint,
-            filled: true,
-            fillColor: Colors.white,
-            suffixIcon: Icon(icon, color: Colors.grey),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12.0),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade300),
+          ),
+          child: DropdownButtonFormField<String>(
+            value: null,
+            hint: Text(hint, style: const TextStyle(color: Colors.black54)),
+            decoration: const InputDecoration(
+              border: InputBorder.none, // Bỏ đường gạch chân
+            ),
+            items: [
+              // Bạn có thể thêm các DropdownMenuItem ở đây
+              // Ví dụ: DropdownMenuItem(value: 'ca1', child: Text('Ca 1: 7:00-9:40')),
+            ],
+            onChanged: (String? newValue) {
+              // Xử lý khi người dùng chọn một mục
+            },
           ),
         ),
       ],
