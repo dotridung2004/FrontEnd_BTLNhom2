@@ -18,14 +18,12 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
         fontFamily: 'Arial',
-        // Dùng đúng đối tượng CardThemeData
         cardTheme: CardThemeData(
           elevation: 1,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           clipBehavior: Clip.antiAlias,
         ),
       ),
-      // ✅ ĐÃ SỬA: Chuyển đổi userId từ số sang chuỗi bằng .toString()
       home: LeaveAndMakeupScreen(userId: 12345.toString()),
       debugShowCheckedModeBanner: false,
     );
@@ -51,7 +49,6 @@ class _LeaveAndMakeupScreenState extends State<LeaveAndMakeupScreen> {
   @override
   void initState() {
     super.initState();
-    // Giờ bạn có thể sử dụng userId một cách an toàn
     print('ID của giảng viên là: ${widget.userId}');
   }
 
@@ -372,7 +369,13 @@ class _RegisterMakeupScreenState extends State<RegisterMakeupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final List<String> shifts = ['Ca 1: 7:00-9:40', 'Ca 2: 9:45-12:20', 'Ca 3: 12:55-15:35'];
+    // ✅ ĐÃ SỬA: Thêm "Ca 4" vào danh sách
+    final List<String> shifts = [
+      'Ca 1: 7:00-9:40',
+      'Ca 2: 9:45-12:20',
+      'Ca 3: 12:55-15:35',
+      'Ca 4: 15:40-18:20'
+    ];
     final List<String> rooms = ['Phòng 207-B5', 'Phòng 210-B5', 'Phòng 211-B5'];
 
     return Scaffold(
