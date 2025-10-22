@@ -565,7 +565,7 @@ class _RegisterMakeupScreenState extends State<RegisterMakeupScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                child: const Text('Đăng ký', style: TextStyle(color: Colors.white, fontSize: 16)),
+                child: const Text('ăng ký', style: TextStyle(color: Colors.white, fontSize: 16)),
               ),
             ),
           ],
