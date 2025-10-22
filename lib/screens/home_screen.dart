@@ -6,7 +6,7 @@ import 'package:btl_nhom2/screens/profile_screen.dart';
 import 'package:btl_nhom2/screens/schedule_screen.dart';
 import 'package:flutter/material.dart';
 import 'report_screen.dart';
-import 'leave_makeup_screen.dart'; // ✅ ĐÃ THÊM DÒNG NÀY
+import 'leave_makeup_screen.dart';
 import 'attendance_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -28,15 +28,15 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
 
-    // ✅ ĐÃ SỬA LỖI: Truyền userId cho TẤT CẢ các màn hình
-    // và bỏ các const không cần thiết.
+    // ✅ ĐÃ SỬA: Xóa bỏ .toString() ở những màn hình cần userId là kiểu int.
+    // Giữ lại .toString() cho những màn hình cần userId là kiểu String.
     _widgetOptions = <Widget>[
       HomeScreenContent(userId: widget.userId),
-      ScheduleScreen(userId: widget.userId),
-      AttendanceScreen(userId: widget.userId),
-      LeaveAndMakeupScreen(userId: widget.userId),
-      ReportScreen(userId: widget.userId),
-      ProfileScreen(userId: widget.userId),
+      ScheduleScreen(userId: widget.userId), // Cần int
+      AttendanceScreen(userId: widget.userId), // Cần int
+      LeaveAndMakeupScreen(userId: widget.userId.toString()), // Cần String
+      ReportScreen(userId: widget.userId), // Cần int
+      ProfileScreen(userId: widget.userId), // Cần int
     ];
 
     _fetchUserData();
