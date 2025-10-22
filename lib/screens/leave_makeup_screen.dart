@@ -385,11 +385,11 @@ class _RegisterMakeupScreenState extends State<RegisterMakeupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // ✅ ĐÃ SỬA: Thêm "Ca 3" vào danh sách
+    // ✅ ĐÃ SỬA: Cập nhật giờ của "Ca 3"
     final List<String> shifts = [
       'Ca 1: 7:00-9:40',
       'Ca 2: 9:45-12:20',
-      'Ca 3: 12:55-3:40'
+      'Ca 3: 12:55-15:35' // Đổi 3:40 thành 15:35
     ];
     final List<String> rooms = ['Phòng 207-B5', 'Phòng 210-B5'];
 
