@@ -38,7 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
       // 👆
       ScheduleScreen(userId: widget.userId),
       AttendanceScreen(userId: widget.userId),
-      const LeaveAndMakeupScreen(),
+      LeaveAndMakeupScreen(userId: widget.userId),
       ReportScreen(userId: widget.userId),
       ProfileScreen(userId: widget.userId),
     ];

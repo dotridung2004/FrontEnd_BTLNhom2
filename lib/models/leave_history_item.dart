@@ -1,5 +1,4 @@
 class LeaveHistoryItem {
-  // Tương tự PendingMakeupItem nhưng thêm status và reason
   final int leaveRequestId;
   final int scheduleId;
   final String dateString;
@@ -14,7 +13,14 @@ class LeaveHistoryItem {
   LeaveHistoryItem({
     required this.leaveRequestId,
     required this.scheduleId,
-    // ... các trường khác ...
+    // 👇 THÊM CÁC TRƯỜNG CÒN LẠI VÀO CONSTRUCTOR
+    required this.dateString,
+    required this.timeRange,
+    required this.lessonPeriod,
+    required this.subjectName,
+    required this.courseCode,
+    required this.location,
+    // 👆 KẾT THÚC THÊM
     required this.leaveStatus,
     required this.reason,
   });
@@ -23,7 +29,14 @@ class LeaveHistoryItem {
     return LeaveHistoryItem(
       leaveRequestId: json['leave_request_id'] ?? 0,
       scheduleId: json['schedule_id'] ?? 0,
-      // ... parse các trường khác ...
+      // 👇 PARSE CÁC TRƯỜNG CÒN LẠI TỪ JSON
+      dateString: json['date_string'] ?? 'N/A',
+      timeRange: json['time_range'] ?? '',
+      lessonPeriod: json['lesson_period'] ?? '',
+      subjectName: json['subject_name'] ?? '',
+      courseCode: json['course_code'] ?? '', // Đảm bảo key khớp với JSON backend
+      location: json['location'] ?? '',
+      // 👆 KẾT THÚC PARSE
       leaveStatus: json['leave_status'] ?? 'N/A',
       reason: json['reason'] ?? '',
     );
