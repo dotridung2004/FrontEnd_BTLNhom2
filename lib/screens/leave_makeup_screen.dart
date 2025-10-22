@@ -776,7 +776,7 @@ Future<bool?> showSuccessDialog(BuildContext context, String message) {
                 padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
               ),
               child: const Text(
-                'Xác nhậ',
+                'Xác nhận',
                 style: TextStyle(color: Colors.white, fontSize: 16),
               ),
               onPressed: () {
