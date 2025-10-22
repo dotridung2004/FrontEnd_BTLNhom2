@@ -28,14 +28,14 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
 
-    // ✅ ĐÃ SỬA LỖI: Chỉ truyền userId cho ProfileScreen
+    // ✅ ĐÃ SỬA LỖI: Chỉ truyền userId cho ProfileScreen (nếu các màn hình khác không cần)
     _widgetOptions = <Widget>[
-      const HomeScreenContent(),      // Index 0
-      const ScheduleScreen(),         // Index 1
-      const AttendanceScreen(),       // Index 2
-      const LeaveMakeupScreen(),      // Index 3
-      const ReportScreen(),           // Index 4
-      ProfileScreen(userId: widget.userId), // Index 5 (Không có const)
+      const HomeScreenContent(),
+      const ScheduleScreen(),
+      const AttendanceScreen(),
+      const LeaveMakeupScreen(),
+      const ReportScreen(),
+      ProfileScreen(userId: widget.userId), // Bỏ const vì userId không phải hằng số
     ];
 
     _fetchUserData();
