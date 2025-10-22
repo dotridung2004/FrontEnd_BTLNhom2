@@ -346,7 +346,7 @@ class _RegisterLeaveScreenState extends State<RegisterLeaveScreen> {
 }
 
 //==================================================================
-// MÀN HÌNH 3: ĐĂNG KÝ DẠY BÙ (✅ ĐÃ SỬA)
+// MÀN HÌNH 3: ĐĂNG KÝ DẠY BÙ
 //==================================================================
 class RegisterMakeupScreen extends StatefulWidget {
   const RegisterMakeupScreen({super.key});
@@ -359,7 +359,6 @@ class _RegisterMakeupScreenState extends State<RegisterMakeupScreen> {
   DateTime? _selectedDate;
   final TextEditingController _dateController = TextEditingController();
 
-  // Biến để lưu ca và phòng đã chọn
   String? _selectedShift;
   String? _selectedRoom;
 
@@ -386,8 +385,12 @@ class _RegisterMakeupScreenState extends State<RegisterMakeupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Danh sách các lựa chọn cho ca học và phòng học
-    final List<String> shifts = ['Ca 1: 7:00-9:40', 'Ca 2: 9:45-12:20'];
+    // ✅ ĐÃ SỬA: Thêm "Ca 3" vào danh sách
+    final List<String> shifts = [
+      'Ca 1: 7:00-9:40',
+      'Ca 2: 9:45-12:20',
+      'Ca 3: 12:55-3:40'
+    ];
     final List<String> rooms = ['Phòng 207-B5', 'Phòng 210-B5'];
 
     return Scaffold(
@@ -458,7 +461,6 @@ class _RegisterMakeupScreenState extends State<RegisterMakeupScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-              // Trường chọn ngày
               const Text('Chọn ngày dạy bù:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               const SizedBox(height: 8),
               GestureDetector(
@@ -478,7 +480,6 @@ class _RegisterMakeupScreenState extends State<RegisterMakeupScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              // Trường chọn ca dạy bù (Dropdown)
               _buildDropdownField(
                 label: 'Chọn ca dạy bù:',
                 hint: 'Chọn một ca học',
@@ -491,7 +492,6 @@ class _RegisterMakeupScreenState extends State<RegisterMakeupScreen> {
                 },
               ),
               const SizedBox(height: 16),
-              // Trường chọn phòng học (Dropdown)
               _buildDropdownField(
                 label: 'Chọn phòng học:',
                 hint: 'Chọn một phòng học',
@@ -560,7 +560,6 @@ class _RegisterMakeupScreenState extends State<RegisterMakeupScreen> {
     );
   }
 
-  // Widget helper cho các ô dropdown động
   Widget _buildDropdownField({
     required String label,
     required String hint,
