@@ -46,12 +46,69 @@ class LeaveAndMakeupScreen extends StatefulWidget {
 }
 
 class _LeaveAndMakeupScreenState extends State<LeaveAndMakeupScreen> {
+  // ✅ ĐÃ SỬA: Thêm super.initState()
+  @override
+  void initState() {
+    super.initState(); // Dòng này là bắt buộc và phải ở đầu tiên
+    print('ID của giảng viên là: ${widget.userId}');
+  }
+
   @override
   Widget build(BuildContext context) {
     final expansionTileTheme = Theme.of(context).copyWith(dividerColor: Colors.transparent);
 
     return Scaffold(
       backgroundColor: Colors.grey[200],
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 1,
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: CircleAvatar(
+            backgroundColor: Colors.blue.shade800,
+            child: const Text('TLU', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+        ),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Thuy Loi', style: TextStyle(color: Colors.grey[800], fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text('University', style: TextStyle(color: Colors.grey, fontSize: 14)),
+          ],
+        ),
+        actions: [
+          IconButton(
+            icon: Stack(
+              alignment: Alignment.center,
+              children: [
+                Icon(Icons.notifications_none, color: Colors.grey[800], size: 30),
+                Positioned(
+                  top: 0,
+                  right: 0,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                    child: const Text('2', style: TextStyle(color: Colors.white, fontSize: 10)),
+                  ),
+                ),
+              ],
+            ),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ScheduleSelectionScreen()),
+              );
+            },
+          ),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.0),
+            child: CircleAvatar(
+              backgroundColor: Colors.blue,
+              child: Text('D', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+          ),
+        ],
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
@@ -85,7 +142,6 @@ class _LeaveAndMakeupScreenState extends State<LeaveAndMakeupScreen> {
                 children: [
                   Expanded(
                     child: ElevatedButton.icon(
-                      // ✅ ĐÃ SỬA: Chuyển hướng đến màn hình chọn buổi học
                       onPressed: () {
                         Navigator.push(
                           context,
@@ -107,7 +163,6 @@ class _LeaveAndMakeupScreenState extends State<LeaveAndMakeupScreen> {
                   Expanded(
                     child: ElevatedButton.icon(
                       onPressed: () {
-                        // TODO: Tương tự, bạn có thể tạo một màn hình chọn buổi cần bù để đăng ký dạy bù
                         Navigator.push(
                           context,
                           MaterialPageRoute(builder: (context) => const RegisterMakeupScreen()),
@@ -179,7 +234,7 @@ class _LeaveAndMakeupScreenState extends State<LeaveAndMakeupScreen> {
 }
 
 //==================================================================
-// ✅ MÀN HÌNH MỚI: CHỌN BUỔI HỌC ĐỂ ĐĂNG KÝ NGHỈ
+// MÀN HÌNH MỚI: CHỌN BUỔI HỌC ĐỂ ĐĂNG KÝ NGHỈ
 //==================================================================
 class ScheduleSelectionScreen extends StatelessWidget {
   const ScheduleSelectionScreen({super.key});
@@ -189,7 +244,7 @@ class ScheduleSelectionScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.grey[200],
       appBar: AppBar(
-        title: const Text('Chọn buổi học để nghỉ', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: const Text('Thông báo', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.blue,
         iconTheme: const IconThemeData(color: Colors.white),
         elevation: 1,
@@ -241,7 +296,6 @@ class ScheduleSelectionScreen extends StatelessWidget {
 // MÀN HÌNH 2: ĐĂNG KÝ NGHỈ DẠY (TRANG ĐIỀN FORM)
 //==================================================================
 class RegisterLeaveScreen extends StatefulWidget {
-  // ✅ ĐÃ SỬA: Thêm các tham số để nhận thông tin buổi học
   final String timeRange;
   final String lessonPeriod;
   final String subjectName;
@@ -294,7 +348,6 @@ class _RegisterLeaveScreenState extends State<RegisterLeaveScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ✅ ĐÃ SỬA: Truyền dữ liệu buổi học vào ScheduleInfoCard
               ScheduleInfoCard(
                 isMakeupScreen: false,
                 timeRange: widget.timeRange,
@@ -375,7 +428,6 @@ class _RegisterLeaveScreenState extends State<RegisterLeaveScreen> {
             if (_formKey.currentState!.validate()) {
               final confirmed = await showSuccessDialog(context, 'Gửi yêu cầu nghỉ dạy thành công.');
               if (confirmed == true && context.mounted) {
-                // Pop 2 lần để quay về màn hình chính
                 Navigator.of(context).pop();
                 Navigator.of(context).pop();
               }
@@ -721,7 +773,6 @@ class ScheduleDetailItem extends StatelessWidget {
 
 class ScheduleInfoCard extends StatelessWidget {
   final bool isMakeupScreen;
-  // ✅ ĐÃ SỬA: Thêm các tham số để nhận dữ liệu động
   final String timeRange;
   final String lessonPeriod;
   final String subjectName;
@@ -762,7 +813,6 @@ class ScheduleInfoCard extends StatelessWidget {
                     Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // ✅ ĐÃ SỬA: Hiển thị dữ liệu động
                         Text(timeRange, style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 18)),
                         Text(lessonPeriod, style: const TextStyle(color: Colors.grey)),
                       ],
@@ -772,14 +822,12 @@ class ScheduleInfoCard extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // ✅ ĐÃ SỬA: Hiển thị dữ liệu động
                           Text('$subjectName $courseCode', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                           const SizedBox(height: 6),
                           Row(
                             children: [
                               const Icon(Icons.location_on, color: Color(0xFF1976D2), size: 16),
                               const SizedBox(width: 4),
-                              // ✅ ĐÃ SỬA: Hiển thị dữ liệu động
                               Text(location, style: const TextStyle(color: Color(0xFF1976D2))),
                             ],
                           ),
@@ -797,7 +845,6 @@ class ScheduleInfoCard extends StatelessWidget {
   }
 }
 
-// ✅ WIDGET MỚI: Card cho từng buổi học trong danh sách chọn để nghỉ
 class LeaveScheduleCard extends StatelessWidget {
   final String timeRange;
   final String lessonPeriod;
@@ -864,7 +911,6 @@ class LeaveScheduleCard extends StatelessWidget {
                 alignment: Alignment.center,
                 child: ElevatedButton(
                   onPressed: () {
-                    // Khi bấm nút, chuyển đến màn hình điền form và truyền dữ liệu theo
                     Navigator.push(
                       context,
                       MaterialPageRoute(
