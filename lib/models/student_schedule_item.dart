@@ -1,3 +1,5 @@
+// lib/models/student_schedule_item.dart
+
 class StudentScheduleItem {
   final int id;
   final String timeRange;
@@ -8,6 +10,10 @@ class StudentScheduleItem {
   final String status;
   final String teacherName; // Tên giáo viên
 
+  // 👇 *** BẮT BUỘC THÊM TRƯỜNG NÀY ***
+  // Backend phải trả về trường này, ví dụ: "2025-09-18T09:45:00"
+  final DateTime scheduleDate;
+
   StudentScheduleItem({
     required this.id,
     required this.timeRange,
@@ -17,6 +23,8 @@ class StudentScheduleItem {
     required this.location,
     required this.status,
     required this.teacherName,
+    // 👇 *** THÊM VÀO CONSTRUCTOR ***
+    required this.scheduleDate,
   });
 
   factory StudentScheduleItem.fromJson(Map<String, dynamic> json) {
@@ -29,6 +37,12 @@ class StudentScheduleItem {
       location: json['location'] ?? '',
       status: json['status'] ?? 'Sắp diễn ra',
       teacherName: json['teacher_name'] ?? 'N/A',
+
+      // 👇 *** PARSE TRƯỜNG DATE TỪ BACKEND ***
+      // Đảm bảo backend trả về 'schedule_date'
+      scheduleDate: json['schedule_date'] != null
+          ? DateTime.parse(json['schedule_date'])
+          : DateTime.now(), // Fallback (không nên xảy ra)
     );
   }
 }
