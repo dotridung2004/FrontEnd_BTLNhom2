@@ -182,6 +182,8 @@ class RegisterLeaveScreen extends StatefulWidget {
 }
 
 class _RegisterLeaveScreenState extends State<RegisterLeaveScreen> {
+  // ✅ ĐÃ THÊM: GlobalKey cho Form
+  final _formKey = GlobalKey<FormState>();
   File? _pickedFile;
 
   Future<void> _pickFile() async {
@@ -200,10 +202,7 @@ class _RegisterLeaveScreenState extends State<RegisterLeaveScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[200],
       appBar: AppBar(
-        title: const Text(
-          'Đăng ký nghỉ dạy',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
+        title: const Text('Đăng ký nghỉ dạy', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.blue,
         iconTheme: const IconThemeData(color: Colors.white),
         elevation: 1,
@@ -212,115 +211,126 @@ class _RegisterLeaveScreenState extends State<RegisterLeaveScreen> {
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Card(
-                elevation: 2,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                child: IntrinsicHeight(
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 6,
-                        decoration: const BoxDecoration(
-                          color: Colors.blue,
-                          borderRadius: BorderRadius.only(topLeft: Radius.circular(12), bottomLeft: Radius.circular(12)),
-                        ),
-                      ),
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Row(
-                            children: [
-                              const Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text('7:00 - 9:40', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 18)),
-                                  Text('Tiết 1-3', style: TextStyle(color: Colors.grey)),
-                                ],
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text('Phát triển ứng dụng cho các thiết bị di động-1-25 (CSE441_001)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                                    const SizedBox(height: 6),
-                                    Row(
-                                      children: [
-                                        Icon(Icons.location_on, color: Colors.blue[700], size: 16),
-                                        const SizedBox(width: 4),
-                                        Text('210 - B5', style: TextStyle(color: Colors.blue[700])),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
+          // ✅ ĐÃ THÊM: Bọc Column trong Form
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Card(
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  child: IntrinsicHeight(
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 6,
+                          decoration: const BoxDecoration(
+                            color: Colors.blue,
+                            borderRadius: BorderRadius.only(topLeft: Radius.circular(12), bottomLeft: Radius.circular(12)),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              const Text('Lý do nghỉ:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-              const SizedBox(height: 8),
-              TextField(
-                maxLines: 4,
-                decoration: InputDecoration(
-                  hintText: 'Vd; Giảng viên bận công tác đột xuất...',
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Colors.grey)),
-                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
-                ),
-              ),
-              const SizedBox(height: 24),
-              const Text('Minh chứng:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-              const SizedBox(height: 8),
-              GestureDetector(
-                onTap: _pickFile,
-                child: Container(
-                  height: 120,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey.shade400, style: BorderStyle.solid, width: 1),
-                  ),
-                  child: Center(
-                    child: _pickedFile == null
-                        ? const Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.upload_file, size: 40, color: Colors.grey),
-                        SizedBox(height: 8),
-                        Text('Tải ảnh hoặc file lên'),
-                      ],
-                    )
-                        : Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.check_circle, color: Colors.green, size: 40),
-                        const SizedBox(height: 8),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                          child: Text(
-                            _pickedFile!.path.split('/').last,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                            overflow: TextOverflow.ellipsis,
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Row(
+                              children: [
+                                const Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text('7:00 - 9:40', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 18)),
+                                    Text('Tiết 1-3', style: TextStyle(color: Colors.grey)),
+                                  ],
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text('Phát triển ứng dụng cho các thiết bị di động-1-25 (CSE441_001)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                                      const SizedBox(height: 6),
+                                      Row(
+                                        children: [
+                                          Icon(Icons.location_on, color: Colors.blue[700], size: 16),
+                                          const SizedBox(width: 4),
+                                          Text('210 - B5', style: TextStyle(color: Colors.blue[700])),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ],
                     ),
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 24),
+                const Text('Lý do nghỉ:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                const SizedBox(height: 8),
+                // ✅ ĐÃ SỬA: Chuyển TextField thành TextFormField và thêm validator
+                TextFormField(
+                  maxLines: 4,
+                  decoration: InputDecoration(
+                    hintText: 'Vd; Giảng viên bận công tác đột xuất...',
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Colors.grey)),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Vui lòng không để trống';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 24),
+                const Text('Minh chứng:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                const SizedBox(height: 8),
+                GestureDetector(
+                  onTap: _pickFile,
+                  child: Container(
+                    height: 120,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey.shade400, style: BorderStyle.solid, width: 1),
+                    ),
+                    child: Center(
+                      child: _pickedFile == null
+                          ? const Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.upload_file, size: 40, color: Colors.grey),
+                          SizedBox(height: 8),
+                          Text('Tải ảnh hoặc file lên'),
+                        ],
+                      )
+                          : Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.check_circle, color: Colors.green, size: 40),
+                          const SizedBox(height: 8),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                            child: Text(
+                              _pickedFile!.path.split('/').last,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -328,9 +338,12 @@ class _RegisterLeaveScreenState extends State<RegisterLeaveScreen> {
         padding: const EdgeInsets.all(16.0),
         child: ElevatedButton(
           onPressed: () async {
-            final confirmed = await showSuccessDialog(context, 'Gửi yêu cầu nghỉ dạy thành công.');
-            if (confirmed == true && context.mounted) {
-              Navigator.of(context).pop();
+            // ✅ ĐÃ SỬA: Thêm logic kiểm tra form
+            if (_formKey.currentState!.validate()) {
+              final confirmed = await showSuccessDialog(context, 'Gửi yêu cầu nghỉ dạy thành công.');
+              if (confirmed == true && context.mounted) {
+                Navigator.of(context).pop();
+              }
             }
           },
           style: ElevatedButton.styleFrom(
@@ -356,6 +369,8 @@ class RegisterMakeupScreen extends StatefulWidget {
 }
 
 class _RegisterMakeupScreenState extends State<RegisterMakeupScreen> {
+  // ✅ ĐÃ THÊM: GlobalKey cho Form
+  final _formKey = GlobalKey<FormState>();
   DateTime? _selectedDate;
   final TextEditingController _dateController = TextEditingController();
 
@@ -404,7 +419,6 @@ class _RegisterMakeupScreenState extends State<RegisterMakeupScreen> {
       'Ca 2: 9:45-12:20',
       'Ca 3: 12:55-15:35'
     ];
-    // ✅ ĐÃ SỬA: Thêm "Phòng 211 - B5" vào danh sách
     final List<String> rooms = ['Phòng 207-B5', 'Phòng 210-B5', 'Phòng 211-B5'];
 
     return Scaffold(
@@ -419,118 +433,129 @@ class _RegisterMakeupScreenState extends State<RegisterMakeupScreen> {
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Card(
-                elevation: 2,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                child: IntrinsicHeight(
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 6,
-                        decoration: const BoxDecoration(
-                          color: Colors.red,
-                          borderRadius: BorderRadius.only(topLeft: Radius.circular(12), bottomLeft: Radius.circular(12)),
-                        ),
-                      ),
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Row(
-                            children: [
-                              const Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text('7:00 - 9:40', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 18)),
-                                  Text('Tiết 1-3', style: TextStyle(color: Colors.grey)),
-                                ],
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text('Thứ 5, Ngày 15/09/2025', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                                    const SizedBox(height: 4),
-                                    const Text('Phát triển ứng dụng chi các thiết bị di động-1-25 (CSE441_001)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                                    const SizedBox(height: 6),
-                                    Row(
-                                      children: [
-                                        Icon(Icons.location_on, color: Colors.blue[700], size: 16),
-                                        const SizedBox(width: 4),
-                                        Text('210 - B5', style: TextStyle(color: Colors.blue[700])),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
+          // ✅ ĐÃ THÊM: Bọc Column trong Form
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Card(
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  child: IntrinsicHeight(
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 6,
+                          decoration: const BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.only(topLeft: Radius.circular(12), bottomLeft: Radius.circular(12)),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              const Text('Chọn ngày dạy bù:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-              const SizedBox(height: 8),
-              GestureDetector(
-                onTap: () => _selectDate(context),
-                child: AbsorbPointer(
-                  child: TextField(
-                    controller: _dateController,
-                    decoration: InputDecoration(
-                      hintText: 'dd/mm/yyyy',
-                      filled: true,
-                      fillColor: Colors.white,
-                      suffixIcon: const Icon(Icons.calendar_today, color: Colors.grey),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
-                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Row(
+                              children: [
+                                const Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text('7:00 - 9:40', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 18)),
+                                    Text('Tiết 1-3', style: TextStyle(color: Colors.grey)),
+                                  ],
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text('Thứ 5, Ngày 15/09/2025', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                                      const SizedBox(height: 4),
+                                      const Text('Phát triển ứng dụng chi các thiết bị di động-1-25 (CSE441_001)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                                      const SizedBox(height: 6),
+                                      Row(
+                                        children: [
+                                          Icon(Icons.location_on, color: Colors.blue[700], size: 16),
+                                          const SizedBox(width: 4),
+                                          Text('210 - B5', style: TextStyle(color: Colors.blue[700])),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              _buildDropdownField(
-                label: 'Chọn ca dạy bù:',
-                hint: 'Chọn một ca học',
-                value: _selectedShift,
-                items: shifts,
-                onChanged: (newValue) {
-                  setState(() {
-                    _selectedShift = newValue;
-                  });
-                },
-              ),
-              const SizedBox(height: 16),
-              _buildDropdownField(
-                label: 'Chọn phòng học:',
-                hint: 'Chọn một phòng học',
-                value: _selectedRoom,
-                items: rooms,
-                onChanged: (newValue) {
-                  setState(() {
-                    _selectedRoom = newValue;
-                  });
-                },
-              ),
-              const SizedBox(height: 16),
-              const Text('Ghi chú:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-              const SizedBox(height: 8),
-              TextField(
-                maxLines: 4,
-                decoration: InputDecoration(
-                  hintText: 'Ghi chú thêm(nếu có):',
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
-                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
+                const SizedBox(height: 24),
+                const Text('Chọn ngày dạy bù:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                const SizedBox(height: 8),
+                GestureDetector(
+                  onTap: () => _selectDate(context),
+                  child: AbsorbPointer(
+                    child: TextFormField( // ✅ ĐÃ SỬA
+                      controller: _dateController,
+                      decoration: InputDecoration(
+                        hintText: 'dd/mm/yyyy',
+                        filled: true,
+                        fillColor: Colors.white,
+                        suffixIcon: const Icon(Icons.calendar_today, color: Colors.grey),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Vui lòng chọn ngày';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 16),
+                _buildDropdownField(
+                  label: 'Chọn ca dạy bù:',
+                  hint: 'Chọn một ca học',
+                  value: _selectedShift,
+                  items: shifts,
+                  onChanged: (newValue) {
+                    setState(() {
+                      _selectedShift = newValue;
+                    });
+                  },
+                ),
+                const SizedBox(height: 16),
+                _buildDropdownField(
+                  label: 'Chọn phòng học:',
+                  hint: 'Chọn một phòng học',
+                  value: _selectedRoom,
+                  items: rooms,
+                  onChanged: (newValue) {
+                    setState(() {
+                      _selectedRoom = newValue;
+                    });
+                  },
+                ),
+                const SizedBox(height: 16),
+                const Text('Ghi chú:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                const SizedBox(height: 8),
+                TextFormField( // ✅ ĐÃ SỬA
+                  maxLines: 4,
+                  decoration: InputDecoration(
+                    hintText: 'Ghi chú thêm(nếu có):',
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
+                  ),
+                  // Ghi chú là không bắt buộc nên không cần validator
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -555,9 +580,12 @@ class _RegisterMakeupScreenState extends State<RegisterMakeupScreen> {
             Expanded(
               child: ElevatedButton(
                 onPressed: () async {
-                  final confirmed = await showSuccessDialog(context, 'Đăng ký dạy bù thành công.');
-                  if (confirmed == true && context.mounted) {
-                    Navigator.of(context).pop();
+                  // ✅ ĐÃ SỬA: Thêm logic kiểm tra form
+                  if (_formKey.currentState!.validate()) {
+                    final confirmed = await showSuccessDialog(context, 'Đăng ký dạy bù thành công.');
+                    if (confirmed == true && context.mounted) {
+                      Navigator.of(context).pop();
+                    }
                   }
                 },
                 style: ElevatedButton.styleFrom(
@@ -606,6 +634,13 @@ class _RegisterMakeupScreenState extends State<RegisterMakeupScreen> {
               );
             }).toList(),
             onChanged: onChanged,
+            // ✅ ĐÃ THÊM: validator cho dropdown
+            validator: (value) {
+              if (value == null) {
+                return 'Vui lòng không để trống';
+              }
+              return null;
+            },
           ),
         ),
       ],
