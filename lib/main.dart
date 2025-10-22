@@ -21,7 +21,7 @@ class MyApp extends StatelessWidget {
         final provider = Provider.of<LocaleProvider>(context);
 
         return MaterialApp(
-          title: 'TLU Teaching schedule',
+          title: 'TLU Teaching Schedule',
           debugShowCheckedModeBanner: false,
 
           supportedLocales: AppLocalizations.supportedLocales,
