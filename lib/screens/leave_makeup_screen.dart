@@ -363,17 +363,31 @@ class _RegisterMakeupScreenState extends State<RegisterMakeupScreen> {
   String? _selectedRoom;
 
   Future<void> _selectDate(BuildContext context) async {
+    final DateTime cutoffDate = DateTime(2025, 9, 15);
+
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: _selectedDate ?? DateTime.now(),
       firstDate: DateTime(2020),
       lastDate: DateTime(2030),
     );
-    if (picked != null && picked != _selectedDate) {
-      setState(() {
-        _selectedDate = picked;
-        _dateController.text = "${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}";
-      });
+
+    if (picked != null) {
+      if (picked.isBefore(cutoffDate)) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Không thể chọn ngày này'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } else {
+        setState(() {
+          _selectedDate = picked;
+          _dateController.text = "${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}";
+        });
+      }
     }
   }
 
@@ -385,13 +399,13 @@ class _RegisterMakeupScreenState extends State<RegisterMakeupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // ✅ ĐÃ SỬA: Cập nhật giờ của "Ca 3"
     final List<String> shifts = [
       'Ca 1: 7:00-9:40',
       'Ca 2: 9:45-12:20',
-      'Ca 3: 12:55-15:35' // Đổi 3:40 thành 15:35
+      'Ca 3: 12:55-15:35'
     ];
-    final List<String> rooms = ['Phòng 207-B5', 'Phòng 210-B5'];
+    // ✅ ĐÃ SỬA: Thêm "Phòng 211 - B5" vào danh sách
+    final List<String> rooms = ['Phòng 207-B5', 'Phòng 210-B5', 'Phòng 211-B5'];
 
     return Scaffold(
       backgroundColor: Colors.grey[200],
