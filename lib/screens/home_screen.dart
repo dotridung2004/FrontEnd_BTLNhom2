@@ -28,14 +28,15 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
 
-    // ✅ ĐÃ SỬA LỖI: Chỉ truyền userId cho ProfileScreen (nếu các màn hình khác không cần)
+    // ✅ ĐÃ SỬA LỖI: Truyền userId cho TẤT CẢ các màn hình
+    // và bỏ các const không cần thiết.
     _widgetOptions = <Widget>[
-      const HomeScreenContent(),
-      const ScheduleScreen(),
-      const AttendanceScreen(),
-      const LeaveMakeupScreen(),
-      const ReportScreen(),
-      ProfileScreen(userId: widget.userId), // Bỏ const vì userId không phải hằng số
+      HomeScreenContent(userId: widget.userId),
+      ScheduleScreen(userId: widget.userId),
+      AttendanceScreen(userId: widget.userId),
+      LeaveAndMakeupScreen(userId: widget.userId),
+      ReportScreen(userId: widget.userId),
+      ProfileScreen(userId: widget.userId),
     ];
 
     _fetchUserData();
@@ -160,10 +161,12 @@ class _HomeScreenState extends State<HomeScreen> {
 // ... (Các widget bên dưới: HomeScreenContent, SummaryCard, ScheduleCard giữ nguyên) ...
 
 class HomeScreenContent extends StatelessWidget {
-  const HomeScreenContent({super.key});
+  final int userId;
+  const HomeScreenContent({super.key, required this.userId});
 
   @override
   Widget build(BuildContext context) {
+    // Giao diện của bạn ở đây
     return ListView(
       padding: const EdgeInsets.all(16.0),
       children: [
