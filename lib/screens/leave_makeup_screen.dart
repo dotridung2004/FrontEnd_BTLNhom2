@@ -883,7 +883,7 @@ class LeaveScheduleCard extends StatelessWidget {
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
-                  child: const Text('Đăng ký'),
+                  child: const Text('ăng ký'),
                 ),
               ),
             ],
