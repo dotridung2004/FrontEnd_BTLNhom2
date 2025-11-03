@@ -1,4 +1,4 @@
-// lib/api_service.dart
+// file: lib/api_service.dart
 
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -21,9 +21,10 @@ import 'models/available_schedule.dart';
 import 'models/student_home_summary.dart';
 import 'models/student_schedule_item.dart';
 
+// <<< SỬA: Import model Room
+import 'models/room.dart';
 
 class ApiService {
-
   // --- 👇 BẮT ĐẦU SỬA LỖI SINGLETON ---
 
   // 1. Tạo một thực thể (instance) tĩnh và riêng tư
@@ -38,7 +39,6 @@ class ApiService {
   ApiService._internal();
 
   // --- 👆 KẾT THÚC SỬA LỖI SINGLETON ---
-
 
   static const String baseUrl = 'http://10.0.2.2:8000/api';
   String? _token; // Biến này bây giờ sẽ được chia sẻ toàn ứng dụng
@@ -67,7 +67,8 @@ class ApiService {
       );
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+        // <<< SỬA LỖI 3: Đồng bộ UTF-8 >>>
+        final data = jsonDecode(utf8.decode(response.bodyBytes));
         final User user = User.fromJson(data['user']);
 
         if (data['token'] != null) {
@@ -84,7 +85,6 @@ class ApiService {
           throw Exception('❌ Tài khoản của bạn đã bị vô hiệu hóa.');
         }
       } else {
-        // 👇 *** SỬA LỖI LINTER ***
         return _handleApiError(response, 'Đăng nhập thất bại');
       }
     } catch (e) {
@@ -102,14 +102,13 @@ class ApiService {
     try {
       final response = await http.get(url, headers: _getHeaders());
       if (response.statusCode == 200) {
-        return HomeSummary.fromJson(jsonDecode(response.body));
+        return HomeSummary.fromJson(jsonDecode(utf8.decode(response.bodyBytes)));
       } else {
-        // 👇 *** SỬA LỖI LINTER ***
         return _handleApiError(response, 'Lỗi khi tải dữ liệu trang chủ');
       }
     } catch (e) {
       print("fetchHomeSummary Error: $e");
-      rethrow; // ✅ *** SỬA LỖI ***
+      rethrow;
     }
   }
 
@@ -121,83 +120,82 @@ class ApiService {
     try {
       final response = await http.get(url, headers: _getHeaders());
       if (response.statusCode == 200) {
-        // Giả sử body được decode bằng utf8 để tránh lỗi font
         return StudentHomeSummary.fromJson(jsonDecode(utf8.decode(response.bodyBytes)));
       } else {
-        // 👇 *** SỬA LỖI LINTER ***
-        return _handleApiError(response, 'Lỗi khi tải dữ liệu trang chủ sinh viên');
+        return _handleApiError(
+            response, 'Lỗi khi tải dữ liệu trang chủ sinh viên');
       }
     } catch (e) {
       print("fetchStudentHomeSummary Error: $e");
-      rethrow; // ✅ *** SỬA LỖI ***
+      rethrow;
     }
   }
 
-  // 👇 *** THÊM HÀM MỚI NÀY ***
   /// Lấy tất cả lịch học trong tuần cho sinh viên
-  Future<List<StudentScheduleItem>> fetchStudentWeeklySchedule(int userId) async {
-    // API endpoint này là giả định, bạn cần thay thế bằng endpoint thật
+  Future<List<StudentScheduleItem>> fetchStudentWeeklySchedule(
+      int userId) async {
     final Uri url = Uri.parse('$baseUrl/students/$userId/schedule/week');
     try {
       final response = await http.get(url, headers: _getHeaders());
       if (response.statusCode == 200) {
-        // Dữ liệu trả về là một danh sách (List)
         final List<dynamic> body = jsonDecode(utf8.decode(response.bodyBytes));
-        // Map danh sách này sang List<StudentScheduleItem>
         return body.map((item) => StudentScheduleItem.fromJson(item)).toList();
       } else {
         return _handleApiError(response, 'Lỗi khi tải lịch học tuần');
       }
     } catch (e) {
       print("fetchStudentWeeklySchedule Error: $e");
-      rethrow; // ✅ *** SỬA LỖI ***
+      rethrow;
     }
   }
-  // 👆 *** KẾT THÚC HÀM MỚI ***
 
   /// ---------------------------------------------------
   /// 🗓️ Màn hình Lịch dạy (Schedule Screen)
   /// ---------------------------------------------------
   Future<ScheduleWeekData> fetchScheduleData(int userId, int weekOffset) async {
-    final Uri url = Uri.parse('$baseUrl/users/$userId/schedule-data?week_offset=$weekOffset');
+    final Uri url = Uri.parse(
+        '$baseUrl/users/$userId/schedule-data?week_offset=$weekOffset');
     try {
       final response = await http.get(url, headers: _getHeaders());
       if (response.statusCode == 200) {
-        return ScheduleWeekData.fromJson(jsonDecode(utf8.decode(response.bodyBytes)));
+        return ScheduleWeekData.fromJson(
+            jsonDecode(utf8.decode(response.bodyBytes)));
       } else {
-        // 👇 *** SỬA LỖI LINTER ***
         return _handleApiError(response, 'Lỗi khi tải dữ liệu lịch dạy');
       }
     } catch (e) {
       print("fetchScheduleData Error: $e");
-      rethrow; // ✅ *** SỬA LỖI ***
+      rethrow;
     }
   }
 
   /// ---------------------------------------------------
   /// ✅ Màn hình Điểm danh (Attendance Screen)
   /// ---------------------------------------------------
-  Future<List<ScheduleDropdownItem>> fetchSchedulesByDate(int userId, DateTime date) async {
+  Future<List<ScheduleDropdownItem>> fetchSchedulesByDate(
+      int userId, DateTime date) async {
     final formattedDate = DateFormat('yyyy-MM-dd').format(date);
-    final Uri url = Uri.parse('$baseUrl/users/$userId/schedules-by-date?date=$formattedDate');
+    final Uri url =
+    Uri.parse('$baseUrl/users/$userId/schedules-by-date?date=$formattedDate');
     try {
       final response = await http.get(url, headers: _getHeaders());
       if (response.statusCode == 200) {
         final List<dynamic> body = jsonDecode(utf8.decode(response.bodyBytes));
         return body.map((item) => ScheduleDropdownItem.fromJson(item)).toList();
       } else {
-        // 👇 *** SỬA LỖI LINTER ***
         return _handleApiError(response, 'Lỗi khi tải danh sách lớp học');
       }
     } catch (e) {
       print("fetchSchedulesByDate Error: $e");
-      rethrow; // ✅ *** SỬA LỖI ***
+      rethrow;
     }
   }
 
-  Future<List<Student>> fetchStudentsForSchedule(int scheduleId, DateTime date) async {
+  Future<List<Student>> fetchStudentsForSchedule(
+      int scheduleId, DateTime date) async {
     final formattedDate = DateFormat('yyyy-MM-dd').format(date);
-    final Uri url = Uri.parse('$baseUrl/schedules/$scheduleId/students-attendance?date=$formattedDate');
+    final Uri url = Uri.parse(
+        '$baseUrl/schedules/$scheduleId/students-attendance?date=$formattedDate');
     try {
       final response = await http.get(url, headers: _getHeaders());
       if (response.statusCode == 200) {
@@ -205,22 +203,24 @@ class ApiService {
         if (body.isEmpty) return [];
         return body.map((item) => Student.fromJson(item)).toList();
       } else {
-        // 👇 *** SỬA LỖI LINTER ***
         return _handleApiError(response, 'Lỗi khi tải danh sách sinh viên');
       }
     } catch (e) {
       print("fetchStudentsForSchedule Error: $e");
-      rethrow; // ✅ *** SỬA LỖI ***
+      rethrow;
     }
   }
 
-  Future<void> saveAttendanceBulk(int scheduleId, DateTime date, List<Student> students) async {
+  Future<void> saveAttendanceBulk(
+      int scheduleId, DateTime date, List<Student> students) async {
     final payload = {
       'schedule_id': scheduleId,
-      'attendances': students.map((s) => {
+      'attendances': students
+          .map((s) => {
         'student_id': int.tryParse(s.studentId) ?? 0,
         'status': s.statusString,
-      }).toList(),
+      })
+          .toList(),
     };
     final Uri url = Uri.parse('$baseUrl/attendances/bulk-save');
     try {
@@ -230,32 +230,34 @@ class ApiService {
         body: jsonEncode(payload),
       );
       if (response.statusCode != 200) {
-        _handleApiError(response, 'Lỗi khi lưu điểm danh'); // Không cần 'return'
+        _handleApiError(response, 'Lỗi khi lưu điểm danh');
       }
     } catch (e) {
       print("saveAttendanceBulk Error: $e");
-      rethrow; // ✅ *** SỬA LỖI ***
+      rethrow;
     }
   }
 
   /// ---------------------------------------------------
   /// 📊 Màn hình Báo cáo (Report Screen)
   /// ---------------------------------------------------
-  Future<ReportData> fetchReportData(int userId, DateTime startDate, DateTime endDate) async {
+  Future<ReportData> fetchReportData(
+      int userId, DateTime startDate, DateTime endDate) async {
     final startDateStr = DateFormat('yyyy-MM-dd').format(startDate);
     final endDateStr = DateFormat('yyyy-MM-dd').format(endDate);
-    final Uri url = Uri.parse('$baseUrl/users/$userId/report-data?start_date=$startDateStr&end_date=$endDateStr');
+    final Uri url = Uri.parse(
+        '$baseUrl/users/$userId/report-data?start_date=$startDateStr&end_date=$endDateStr');
     try {
       final response = await http.get(url, headers: _getHeaders());
       if (response.statusCode == 200) {
-        return ReportData.fromJson(jsonDecode(utf8.decode(response.bodyBytes)));
+        return ReportData.fromJson(
+            jsonDecode(utf8.decode(response.bodyBytes)));
       } else {
-        // 👇 *** SỬA LỖI LINTER ***
         return _handleApiError(response, 'Lỗi khi tải dữ liệu báo cáo');
       }
     } catch (e) {
       print("fetchReportData Error: $e");
-      rethrow; // ✅ *** SỬA LỖI ***
+      rethrow;
     }
   }
 
@@ -267,18 +269,19 @@ class ApiService {
     try {
       final response = await http.get(url, headers: _getHeaders());
       if (response.statusCode == 200) {
-        return LeaveMakeupSummary.fromJson(jsonDecode(utf8.decode(response.bodyBytes)));
+        return LeaveMakeupSummary.fromJson(
+            jsonDecode(utf8.decode(response.bodyBytes)));
       } else {
-        // 👇 *** SỬA LỖI LINTER ***
         return _handleApiError(response, 'Lỗi tải tóm tắt nghỉ bù');
       }
     } catch (e) {
       print("fetchLeaveMakeupSummary Error: $e");
-      rethrow; // ✅ *** SỬA LỖI ***
+      rethrow;
     }
   }
 
-  Future<List<PendingMakeupItem>> fetchPendingMakeupSchedules(int userId) async {
+  Future<List<PendingMakeupItem>> fetchPendingMakeupSchedules(
+      int userId) async {
     final Uri url = Uri.parse('$baseUrl/users/$userId/pending-makeup');
     try {
       final response = await http.get(url, headers: _getHeaders());
@@ -286,12 +289,11 @@ class ApiService {
         final List<dynamic> body = jsonDecode(utf8.decode(response.bodyBytes));
         return body.map((item) => PendingMakeupItem.fromJson(item)).toList();
       } else {
-        // 👇 *** SỬA LỖI LINTER ***
         return _handleApiError(response, 'Lỗi tải danh sách cần bù');
       }
     } catch (e) {
       print("fetchPendingMakeupSchedules Error: $e");
-      rethrow; // ✅ *** SỬA LỖI ***
+      rethrow;
     }
   }
 
@@ -303,59 +305,72 @@ class ApiService {
         final List<dynamic> body = jsonDecode(utf8.decode(response.bodyBytes));
         return body.map((item) => LeaveHistoryItem.fromJson(item)).toList();
       } else {
-        // 👇 *** SỬA LỖI LINTER ***
         return _handleApiError(response, 'Lỗi tải lịch sử nghỉ');
       }
     } catch (e) {
       print("fetchLeaveHistory Error: $e");
-      rethrow; // ✅ *** SỬA LỖI ***
+      rethrow;
     }
   }
 
-  Future<List<AvailableSchedule>> fetchAvailableSchedulesForLeave(int userId) async {
-    final Uri url = Uri.parse('$baseUrl/users/$userId/available-schedules-for-leave');
+  Future<List<AvailableSchedule>> fetchAvailableSchedulesForLeave(
+      int userId) async {
+    final Uri url =
+    Uri.parse('$baseUrl/users/$userId/available-schedules-for-leave');
     try {
       final response = await http.get(url, headers: _getHeaders());
       if (response.statusCode == 200) {
         final List<dynamic> body = jsonDecode(utf8.decode(response.bodyBytes));
         return body.map((item) => AvailableSchedule.fromJson(item)).toList();
       } else {
-        // 👇 *** SỬA LỖI LINTER ***
         return _handleApiError(response, 'Lỗi tải lịch dạy');
       }
     } catch (e) {
       print("fetchAvailableSchedulesForLeave Error: $e");
-      rethrow; // ✅ *** SỬA LỖI ***
+      rethrow;
     }
   }
 
-  Future<void> submitLeaveRequest({required int userId, required int scheduleId, required String reason}) async {
+  Future<void> submitLeaveRequest(
+      {required int userId,
+        required int scheduleId,
+        required String reason}) async {
     final Uri url = Uri.parse('$baseUrl/leave-requests');
     try {
       final response = await http.post(
         url,
         headers: _getHeaders(),
         body: jsonEncode({
+          // <<< SỬA LỖI 1: THÊM user_id (giống file Laravel Controller)
+          'user_id': userId,
           'schedule_id': scheduleId,
           'reason': reason,
         }),
       );
-      if (response.statusCode != 201) {
+      if (response.statusCode != 201 && response.statusCode != 200) {
         _handleApiError(response, 'Lỗi gửi yêu cầu nghỉ');
       }
     } catch (e) {
       print("submitLeaveRequest Error: $e");
-      rethrow; // ✅ *** SỬA LỖI ***
+      rethrow;
     }
   }
 
-  Future<void> submitMakeupRequest({required int userId, required int originalScheduleId, required DateTime newDate, required String newSession, required int newRoomId, String? note}) async {
+  Future<void> submitMakeupRequest(
+      {required int userId,
+        required int originalScheduleId,
+        required DateTime newDate,
+        required String newSession,
+        required int newRoomId,
+        String? note}) async {
     final Uri url = Uri.parse('$baseUrl/makeup-classes');
     try {
       final response = await http.post(
         url,
         headers: _getHeaders(),
         body: jsonEncode({
+          // <<< SỬA LỖI 2: THÊM teacher_id (giống file migration)
+          'teacher_id': userId,
           'original_schedule_id': originalScheduleId,
           'new_schedule_date': DateFormat('yyyy-MM-dd').format(newDate),
           'new_session': newSession,
@@ -363,12 +378,36 @@ class ApiService {
           'note': note,
         }),
       );
-      if (response.statusCode != 201) {
+      if (response.statusCode != 201 && response.statusCode != 200) {
         _handleApiError(response, 'Lỗi gửi yêu cầu dạy bù');
       }
     } catch (e) {
       print("submitMakeupRequest Error: $e");
-      rethrow; // ✅ *** SỬA LỖI ***
+      rethrow;
+    }
+  }
+
+  // <<< SỬA: HÀM MỚI ĐỂ TẢI PHÒNG HỌC >>>
+  /// ---------------------------------------------------
+  /// 🏫 Quản lý Phòng học (MỚI)
+  /// ---------------------------------------------------
+  Future<List<Room>> fetchAvailableRooms() async {
+    // ❗️ Giả sử endpoint của bạn là '/rooms'.
+    // ❗️ Bạn cần thay đổi '/rooms' cho đúng với API backend của bạn.
+    final Uri url = Uri.parse('$baseUrl/rooms');
+    try {
+      final response = await http.get(url, headers: _getHeaders());
+      if (response.statusCode == 200) {
+        // Giả sử API trả về một List các đối tượng Room
+        final List<dynamic> body = jsonDecode(utf8.decode(response.bodyBytes));
+        // Chuyển đổi List<dynamic> thành List<Room>
+        return body.map((item) => Room.fromJson(item)).toList();
+      } else {
+        return _handleApiError(response, 'Lỗi khi tải danh sách phòng học');
+      }
+    } catch (e) {
+      print("fetchAvailableRooms Error: $e");
+      rethrow;
     }
   }
 
@@ -380,7 +419,8 @@ class ApiService {
     try {
       final response = await http.get(url, headers: _getHeaders());
       if (response.statusCode == 200) {
-        final Map<String, dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
+        final Map<String, dynamic> data =
+        jsonDecode(utf8.decode(response.bodyBytes));
         if (data['data'] is List) {
           final List<dynamic> body = data['data'];
           return body.map((item) => User.fromJson(item)).toList();
@@ -388,12 +428,11 @@ class ApiService {
           throw Exception('Định dạng dữ liệu trả về không đúng.');
         }
       } else {
-        // 👇 *** SỬA LỖI LINTER ***
         return _handleApiError(response, 'Lỗi khi tải danh sách người dùng');
       }
     } catch (e) {
       print("fetchUsers Error: $e");
-      rethrow; // ✅ *** SỬA LỖI ***
+      rethrow;
     }
   }
 
@@ -407,12 +446,11 @@ class ApiService {
       } else if (response.statusCode == 404) {
         throw Exception('❌ Không tìm thấy người dùng');
       } else {
-        // 👇 *** SỬA LỖI LINTER ***
         return _handleApiError(response, 'Lỗi khi tải thông tin người dùng');
       }
     } catch (e) {
       print("fetchUserById Error: $e");
-      rethrow; // ✅ *** SỬA LỖI ***
+      rethrow;
     }
   }
 
@@ -429,7 +467,7 @@ class ApiService {
       }
     } catch (e) {
       print("createUser Error: $e");
-      rethrow; // ✅ *** SỬA LỖI ***
+      rethrow;
     }
   }
 
@@ -446,7 +484,7 @@ class ApiService {
       }
     } catch (e) {
       print("updateUser Error: $e");
-      rethrow; // ✅ *** SỬA LỖI ***
+      rethrow;
     }
   }
 
@@ -459,7 +497,7 @@ class ApiService {
       }
     } catch (e) {
       print("deleteUser Error: $e");
-      rethrow; // ✅ *** SỬA LỖI ***
+      rethrow;
     }
   }
 
@@ -467,11 +505,23 @@ class ApiService {
   /// ⚙️ Hàm xử lý lỗi API chung (Private Helper)
   /// ---------------------------------------------------
   Never _handleApiError(http.Response response, String defaultMessage) {
-    print("API Error (${response.request?.url}): ${response.statusCode} - ${response.body}");
+    print(
+        "API Error (${response.request?.url}): ${response.statusCode} - ${response.body}");
     try {
       // Thử decode bằng utf8 trước
       final error = jsonDecode(utf8.decode(response.bodyBytes));
-      throw Exception(error['message'] ?? '$defaultMessage (Code: ${response.statusCode})');
+      // Sửa lỗi: Check message và errors sâu hơn (giống các file trước)
+      if (error is Map && error.containsKey('message')) {
+        if (error.containsKey('errors')) {
+          final errors = error['errors'] as Map;
+          final firstError = errors.values.first;
+          if (firstError is List && firstError.isNotEmpty) {
+            throw Exception(firstError.first);
+          }
+        }
+        throw Exception(error['message']);
+      }
+      throw Exception(error.toString());
     } catch (e) {
       // Nếu decode utf8 thất bại (ví dụ: body không phải JSON), dùng message mặc định
       if (e is FormatException) {
@@ -481,5 +531,4 @@ class ApiService {
       rethrow;
     }
   }
-
 }

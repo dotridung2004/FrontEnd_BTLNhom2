@@ -4,6 +4,7 @@ import 'package:btl_nhom2/table/home_summary.dart';
 import 'package:btl_nhom2/table/teaching_schedule.dart';
 import 'package:btl_nhom2/table/user.dart';
 import 'package:intl/intl.dart'; // 👈 Cần cho format ngày tháng
+import 'package:btl_nhom2/utils/schedule_utils.dart'; // <<< MỚI 1: Import file tiện ích
 
 // --- Các import cũ ---
 import 'package:btl_nhom2/screens/profile_screen.dart';
@@ -33,9 +34,7 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
 
     _widgetOptions = <Widget>[
-      // 👇 SỬA LẠI: Truyền userId cho HomeScreenContent
       HomeScreenContent(userId: widget.userId),
-      // 👆
       ScheduleScreen(userId: widget.userId),
       AttendanceScreen(userId: widget.userId),
       LeaveAndMakeupScreen(userId: widget.userId),
@@ -74,7 +73,8 @@ class _HomeScreenState extends State<HomeScreen> {
           child: SizedBox(
             width: 16,
             height: 16,
-            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+            child:
+            CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
           ),
         ),
       );
@@ -96,7 +96,10 @@ class _HomeScreenState extends State<HomeScreen> {
         child: avatar == null
             ? Text(
           initial,
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+          style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 18),
         )
             : null,
       ),
@@ -113,14 +116,21 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: const EdgeInsets.all(8.0),
           child: CircleAvatar(
             backgroundColor: Colors.blue.shade800,
-            child: const Text('TLU', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            child: const Text('TLU',
+                style:
+                TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
           ),
         ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Thuy Loi', style: TextStyle(color: Colors.grey[800], fontSize: 18, fontWeight: FontWeight.bold)),
-            const Text('University', style: TextStyle(color: Colors.grey, fontSize: 14)),
+            Text('Thuy Loi',
+                style: TextStyle(
+                    color: Colors.grey[800],
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold)),
+            const Text('University',
+                style: TextStyle(color: Colors.grey, fontSize: 14)),
           ],
         ),
         actions: [
@@ -133,8 +143,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 right: 0,
                 child: Container(
                   padding: const EdgeInsets.all(4),
-                  decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
-                  child: const Text('3', style: TextStyle(color: Colors.white, fontSize: 10)),
+                  decoration: const BoxDecoration(
+                      color: Colors.red, shape: BoxShape.circle),
+                  child: const Text('3',
+                      style: TextStyle(color: Colors.white, fontSize: 10)),
                 ),
               ),
             ],
@@ -142,7 +154,10 @@ class _HomeScreenState extends State<HomeScreen> {
           _buildUserAvatar(),
         ],
       ),
-      body: _widgetOptions.elementAt(_selectedIndex),
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: _widgetOptions,
+      ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         selectedItemColor: Colors.blue.shade800,
@@ -151,26 +166,26 @@ class _HomeScreenState extends State<HomeScreen> {
         onTap: _onItemTapped,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Trang chủ'),
-          BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: 'Lịch dạy'),
-          BottomNavigationBarItem(icon: Icon(Icons.check_circle_outline), label: 'Điểm danh'),
-          BottomNavigationBarItem(icon: Icon(Icons.access_time), label: 'Nghỉ/Bù'),
-          BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: 'Báo cáo'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Tài khoản'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.calendar_today), label: 'Lịch dạy'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.check_circle_outline), label: 'Điểm danh'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.access_time), label: 'Nghỉ/Bù'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.bar_chart), label: 'Báo cáo'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.person_outline), label: 'Tài khoản'),
         ],
       ),
     );
   }
 }
 
-// ... (Widget SummaryCard và ScheduleCard giữ nguyên) ...
-
-
-// --- ⬇️ WIDGET ĐƯỢC CẬP NHẬT ⬇️ ---
+// --- WIDGET NỘI DUNG TRANG CHỦ ---
 
 class HomeScreenContent extends StatefulWidget {
-  // 👉 Thêm dòng này để nhận userId
   final int userId;
-
   const HomeScreenContent({super.key, required this.userId});
 
   @override
@@ -178,46 +193,100 @@ class HomeScreenContent extends StatefulWidget {
 }
 
 class _HomeScreenContentState extends State<HomeScreenContent> {
-  // 👉 Khai báo ApiService và Future
   final ApiService _apiService = ApiService();
   late Future<HomeSummary> _homeSummaryFuture;
+  late final String _todayDateString;
 
   @override
   void initState() {
     super.initState();
-    // 👉 Gọi API khi widget được khởi tạo
     _homeSummaryFuture = _apiService.fetchHomeSummary(widget.userId);
+    _todayDateString = _getTodayDate();
   }
 
-  // 👉 Helper để lấy màu dựa trên status
+  // <<< SỬA 1: Cập nhật hàm lấy màu sắc
+  // Helper để lấy màu dựa trên status (từ API)
   Color _getStatusColor(String status) {
-    if (status == 'Đang diễn ra') return Colors.green;
-    if (status == 'Sắp diễn ra') return Colors.orange;
-    if (status == 'Đã kết thúc') return Colors.grey;
-    return Colors.blue; // Mặc định
+    switch (status.toLowerCase()) {
+      case 'scheduled':
+        return Colors.blue; // Màu xanh dương cho "Theo lịch"
+      case 'cancelled':
+        return Colors.red; // Màu đỏ cho "Đã hủy"
+      case 'ongoing': // Trạng thái đang diễn ra (nếu có)
+        return Colors.green;
+      case 'upcoming': // Trạng thái sắp diễn ra (nếu có)
+        return Colors.orange;
+      case 'finished': // Trạng thái đã kết thúc (nếu có)
+        return Colors.grey;
+      default:
+        return Colors.blue; // Mặc định
+    }
   }
 
-  // 👉 Helper để format ngày tháng
+  // <<< SỬA 2: Thêm hàm dịch trạng thái
+  /// Dịch trạng thái từ API (tiếng Anh) sang tiếng Việt
+  String _translateStatus(String status) {
+    switch (status.toLowerCase()) {
+      case 'scheduled':
+        return 'Theo lịch';
+      case 'cancelled':
+        return 'Đã hủy';
+      case 'ongoing':
+        return 'Đang diễn ra';
+      case 'upcoming':
+        return 'Sắp diễn ra';
+      case 'finished':
+        return 'Đã kết thúc';
+      default:
+        return status; // Trả về nguyên bản nếu không khớp
+    }
+  }
+
+  // Helper để format ngày tháng
   String _getTodayDate() {
-    // Note: Cần import 'package:intl/intl.dart';
-    // Đặt locale 'vi' để có Thứ
     final now = DateTime.now();
     return DateFormat(' (EEEE, dd/MM/yyyy)', 'vi_VN').format(now);
   }
 
+  // Hàm chuyển đổi chuỗi "4-6" thành giờ "9h45-12h25"
+  String _convertLessonsToTime(String lessonString) {
+    // Input: "4-6" hoặc "4"
+    if (lessonString.isEmpty) return "N/A";
+
+    List<int> lessons = [];
+    try {
+      if (lessonString.contains('-')) {
+        // Case: "4-6"
+        final parts = lessonString.split('-');
+        final int start = int.parse(parts[0].trim());
+        final int end = int.parse(parts[1].trim());
+        if (end < start) return lessonString; // Lỗi, trả về chuỗi gốc
+        for (int i = start; i <= end; i++) {
+          lessons.add(i);
+        }
+      } else {
+        // Case: "4"
+        lessons.add(int.parse(lessonString.trim()));
+      }
+
+      if (lessons.isEmpty) return lessonString; // Lỗi, trả về chuỗi gốc
+
+      // Gọi hàm từ ScheduleUtils để lấy giờ
+      return ScheduleUtils.getLessonTimeRange(lessons);
+    } catch (e) {
+      debugPrint('Lỗi parse chuỗi tiết học: $e');
+      return lessonString; // Nếu lỗi, trả về chuỗi gốc
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    // 👉 Dùng FutureBuilder để xử lý 3 trạng thái: loading, error, success
     return FutureBuilder<HomeSummary>(
       future: _homeSummaryFuture,
       builder: (context, snapshot) {
-
-        // 1. TRẠNG THÁI LOADING (Đang tải)
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
-
-        // 2. TRẠNG THÁI LỖI
         if (snapshot.hasError) {
           return Center(
             child: Text(
@@ -226,55 +295,45 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
             ),
           );
         }
-
-        // 3. TRẠNG THÁI THÀNH CÔNG
         if (!snapshot.hasData) {
           return const Center(child: Text('Không có dữ liệu.'));
         }
 
-        // ✅ Lấy dữ liệu đã parse thành công
         final homeData = snapshot.data!;
-        final summary = homeData; // Đổi tên cho ngắn gọn
+        final summary = homeData;
         final schedules = homeData.schedules;
 
-        // Trả về ListView với dữ liệu động
         return ListView(
           padding: const EdgeInsets.all(16.0),
           children: [
-            const Text('Teaching Schedule', style: TextStyle(fontSize: 16, color: Colors.grey)),
+            const Text('Lịch trình giảng dạy',
+                style: TextStyle(fontSize: 16, color: Colors.grey)),
             const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // 👇 Dữ liệu động cho SummaryCard
                 SummaryCard(
                     value: summary.todayLessons.toString(),
-                    label: 'Tiết hôm nay'
-                ),
+                    label: 'Tiết hôm nay'),
                 SummaryCard(
                     value: summary.weekLessons.toString(),
-                    label: 'Tiết tuần này'
-                ),
+                    label: 'Tiết tuần này'),
                 SummaryCard(
                     value: '${summary.completionPercent.toStringAsFixed(0)}%',
-                    label: 'Hoàn thành'
-                ),
+                    label: 'Hoàn thành'),
               ],
             ),
             const SizedBox(height: 24),
             Row(
               children: [
-                const Text('Lịch dạy hôm nay', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                // 👇 Ngày tháng động
-                Text(
-                    _getTodayDate(),
-                    style: const TextStyle(fontSize: 16, color: Colors.grey)
-                ),
+                const Text('Lịch dạy hôm nay',
+                    style:
+                    TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                Text(_todayDateString,
+                    style: const TextStyle(fontSize: 16, color: Colors.grey)),
               ],
             ),
             const SizedBox(height: 16),
-
-            // Nếu không có lịch, hiển thị thông báo
             if (schedules.isEmpty)
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 40.0),
@@ -293,15 +352,16 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                   Padding(
                     padding: const EdgeInsets.only(bottom: 16.0),
                     child: ScheduleCard(
-                      time: schedule.time,
-                      lessons: schedule.lessons,
+                      time: _convertLessonsToTime(schedule.time),
+                      lessons: 'Tiết ${schedule.lessons}',
                       title: schedule.title,
                       courseCode: schedule.courseCode,
                       location: schedule.location,
-                      status: schedule.status,
-                      // 👇 Lấy màu động
-                      statusColor: _getStatusColor(schedule.status),
-                      borderColor: _getStatusColor(schedule.status),
+
+                      // <<< SỬA 3: Truyền dữ liệu đã dịch và màu chính xác
+                      status: _translateStatus(schedule.status), // Dịch sang T.Việt
+                      statusColor: _getStatusColor(schedule.status), // Lấy màu từ status gốc
+                      borderColor: _getStatusColor(schedule.status), // Lấy màu từ status gốc
                     ),
                   ),
               ],
@@ -313,8 +373,7 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
   }
 }
 
-// --- ⬆️ KẾT THÚC SỬA ⬆️ ---
-
+// --- CÁC WIDGET HỖ TRỢ ---
 
 class SummaryCard extends StatelessWidget {
   final String value;
@@ -334,7 +393,11 @@ class SummaryCard extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(value, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.blue.shade800)),
+          Text(value,
+              style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue.shade800)),
           const SizedBox(height: 4),
           Text(label, style: const TextStyle(fontSize: 14, color: Colors.grey)),
         ],
@@ -354,8 +417,8 @@ class ScheduleCard extends StatelessWidget {
     required this.title,
     required this.courseCode,
     required this.location,
-    required this.status,
-    required this.statusColor,
+    required this.status, // Bây giờ sẽ nhận 'Theo lịch', 'Đã hủy', v.v.
+    required this.statusColor, // Sẽ nhận Colors.blue, Colors.red, v.v.
     required this.borderColor,
   });
 
@@ -368,7 +431,11 @@ class ScheduleCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         border: Border(left: BorderSide(color: borderColor, width: 6)),
         boxShadow: [
-          BoxShadow(color: Colors.grey.withOpacity(0.1), spreadRadius: 1, blurRadius: 5, offset: const Offset(0, 3)),
+          BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              spreadRadius: 1,
+              blurRadius: 5,
+              offset: const Offset(0, 3)),
         ],
       ),
       child: Column(
@@ -380,20 +447,37 @@ class ScheduleCard extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(time, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                  // Đây là 'time' (đã được chuyển đổi)
+                  Text(time,
+                      style: const TextStyle(
+                          fontSize: 20, fontWeight: FontWeight.bold)),
+                  // Đây là 'lessons' (đã thêm chữ "Tiết")
                   Text(lessons, style: const TextStyle(color: Colors.grey)),
                 ],
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(color: statusColor.withOpacity(0.1), borderRadius: BorderRadius.circular(20)),
-                child: Text(status, style: TextStyle(color: statusColor, fontWeight: FontWeight.bold)),
+                padding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  // Dùng màu nền nhạt
+                    color: statusColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20)),
+                child: Text(
+                  status, // Hiển thị status đã được dịch
+                  style: TextStyle(
+                      color: statusColor, // Dùng màu đậm cho chữ
+                      fontWeight: FontWeight.bold),
+                ),
               ),
             ],
           ),
           const SizedBox(height: 16),
-          Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          Text(courseCode, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          Text(title,
+              style:
+              const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          Text(courseCode,
+              style:
+              const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -402,16 +486,21 @@ class ScheduleCard extends StatelessWidget {
                 children: [
                   Icon(Icons.location_on_outlined, color: Colors.blue.shade800),
                   const SizedBox(width: 8),
-                  Text(location, style: TextStyle(color: Colors.blue.shade800, fontWeight: FontWeight.bold)),
+                  Text(location,
+                      style: TextStyle(
+                          color: Colors.blue.shade800,
+                          fontWeight: FontWeight.bold)),
                 ],
               ),
               ElevatedButton(
                 onPressed: () {},
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.red,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20)),
                 ),
-                child: const Text('Tài liệu', style: TextStyle(color: Colors.white)),
+                child: const Text('Tài liệu',
+                    style: TextStyle(color: Colors.white)),
               ),
             ],
           ),

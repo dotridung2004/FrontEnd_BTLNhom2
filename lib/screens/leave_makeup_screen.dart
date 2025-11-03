@@ -1,6 +1,8 @@
+// file: lib/screens/leave_makeup_screen.dart
+
 import 'package:flutter/material.dart';
 import 'dart:io'; // Cần cho việc upload file (nếu có)
-// import 'package:file_picker/file_picker.dart'; // Thêm package này vào pubspec.yaml nếu muốn upload file
+// import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
 
 // Import các model và service cần thiết
@@ -9,7 +11,14 @@ import '../models/leave_makeup_summary.dart';
 import '../models/pending_makeup_item.dart';
 import '../models/leave_history_item.dart';
 import '../models/available_schedule.dart';
+import '../table/home_summary.dart';
+import '../table/teaching_schedule.dart';
 
+// <<< SỬA 1: Import file tiện ích
+import '../utils/schedule_utils.dart';
+
+// <<< SỬA: Import model Room
+import '../models/room.dart';
 
 //==================================================================
 // MÀN HÌNH 1: MÀN HÌNH NGHỈ/BÙ CHÍNH
@@ -40,7 +49,8 @@ class _LeaveAndMakeupScreenState extends State<LeaveAndMakeupScreen> {
   Future<void> _loadData() async {
     setState(() {
       _summaryFuture = _apiService.fetchLeaveMakeupSummary(widget.userId);
-      _pendingMakeupFuture = _apiService.fetchPendingMakeupSchedules(widget.userId);
+      _pendingMakeupFuture =
+          _apiService.fetchPendingMakeupSchedules(widget.userId);
       _historyFuture = _apiService.fetchLeaveHistory(widget.userId);
     });
   }
@@ -54,7 +64,8 @@ class _LeaveAndMakeupScreenState extends State<LeaveAndMakeupScreen> {
         onRefresh: _loadData,
         child: SafeArea(
           child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(), // Luôn cho phép cuộn
+            physics:
+            const AlwaysScrollableScrollPhysics(), // Luôn cho phép cuộn
             padding: const EdgeInsets.all(16.0),
             child: Column(
               children: [
@@ -80,31 +91,46 @@ class _LeaveAndMakeupScreenState extends State<LeaveAndMakeupScreen> {
       builder: (context, snapshot) {
         // Trạng thái đang tải
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const SizedBox(height: 62, child: Center(child: CircularProgressIndicator()));
+          return const SizedBox(
+              height: 62, child: Center(child: CircularProgressIndicator()));
         }
         // Trạng thái lỗi
         if (snapshot.hasError) {
           return Container(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(color: Colors.red.shade100, borderRadius: BorderRadius.circular(16)),
-            child: Text('Lỗi tải tóm tắt: ${snapshot.error}', style: TextStyle(color: Colors.red.shade900)),
+            decoration: BoxDecoration(
+                color: Colors.red.shade100,
+                borderRadius: BorderRadius.circular(16)),
+            child: Text('Lỗi tải tóm tắt: ${snapshot.error}',
+                style: TextStyle(color: Colors.red.shade900)),
           );
         }
         // Trạng thái thành công
-        final summary = snapshot.data ?? LeaveMakeupSummary(leaveCount: 0, pendingMakeupCount: 0);
+        final summary =
+            snapshot.data ?? LeaveMakeupSummary(leaveCount: 0, pendingMakeupCount: 0);
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: Colors.grey.shade300),
-            boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.1), spreadRadius: 2, blurRadius: 5, offset: const Offset(0, 3))],
+            boxShadow: [
+              BoxShadow(
+                  color: Colors.grey.withOpacity(0.1),
+                  spreadRadius: 2,
+                  blurRadius: 5,
+                  offset: const Offset(0, 3))
+            ],
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Buổi đã nghỉ: ${summary.leaveCount}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-              Text('Buổi cần bù: ${summary.pendingMakeupCount}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              Text('Buổi đã nghỉ: ${summary.leaveCount}',
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 18)),
+              Text('Buổi cần bù: ${summary.pendingMakeupCount}',
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 18)),
             ],
           ),
         );
@@ -122,17 +148,23 @@ class _LeaveAndMakeupScreenState extends State<LeaveAndMakeupScreen> {
               // Sau khi quay lại từ màn hình đăng ký, tải lại dữ liệu nếu có thay đổi
               final result = await Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => RegisterLeaveScreen(userId: widget.userId)),
+                MaterialPageRoute(
+                    builder: (context) =>
+                        RegisterLeaveScreen(userId: widget.userId)),
               );
               if (result == true) _loadData(); // Nếu màn hình con trả về true
             },
-            icon: const Icon(Icons.cancel_outlined, color: Colors.white, size: 28),
-            label: const Text('Đăng ký nghỉ', style: TextStyle(color: Colors.white)),
+            icon: const Icon(Icons.cancel_outlined,
+                color: Colors.white, size: 28),
+            label: const Text('Đăng ký nghỉ',
+                style: TextStyle(color: Colors.white)),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
               padding: const EdgeInsets.symmetric(vertical: 20),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+              textStyle:
+              const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
             ),
           ),
         ),
@@ -142,16 +174,22 @@ class _LeaveAndMakeupScreenState extends State<LeaveAndMakeupScreen> {
             onPressed: () {
               // Nút này chỉ để thông báo, người dùng phải chọn từ danh sách bên dưới
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Vui lòng chọn một buổi học từ danh sách "Buổi cần bù" bên dưới.')),
+                const SnackBar(
+                    content: Text(
+                        'Vui lòng chọn một buổi học từ danh sách "Buổi cần bù" bên dưới.')),
               );
             },
-            icon: const Icon(Icons.add_circle_outline, color: Colors.white, size: 28),
-            label: const Text('Đăng ký bù', style: TextStyle(color: Colors.white)),
+            icon: const Icon(Icons.add_circle_outline,
+                color: Colors.white, size: 28),
+            label:
+            const Text('Đăng ký bù', style: TextStyle(color: Colors.white)),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.green,
               padding: const EdgeInsets.symmetric(vertical: 20),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+              textStyle:
+              const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
             ),
           ),
         ),
@@ -165,10 +203,12 @@ class _LeaveAndMakeupScreenState extends State<LeaveAndMakeupScreen> {
       future: _pendingMakeupFuture,
       builder: (context, snapshot) {
         final theme = Theme.of(context).copyWith(dividerColor: Colors.transparent);
-        final title = 'Buổi cần bù (${snapshot.hasData ? snapshot.data!.length : 0})';
+        final title =
+            'Buổi cần bù (${snapshot.hasData ? snapshot.data!.length : 0})';
 
         return Card(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           elevation: 1,
           clipBehavior: Clip.antiAlias,
           child: Theme(
@@ -177,22 +217,31 @@ class _LeaveAndMakeupScreenState extends State<LeaveAndMakeupScreen> {
               initiallyExpanded: true, // Mặc định mở rộng
               backgroundColor: Colors.white,
               collapsedBackgroundColor: Colors.white,
-              title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+              title: Text(title,
+                  style: const TextStyle(fontWeight: FontWeight.bold)),
               children: [
                 if (snapshot.connectionState == ConnectionState.waiting)
-                  const Padding(padding: EdgeInsets.all(20.0), child: Center(child: CircularProgressIndicator())),
+                  const Padding(
+                      padding: EdgeInsets.all(20.0),
+                      child: Center(child: CircularProgressIndicator())),
                 if (snapshot.hasError)
-                  Padding(padding: const EdgeInsets.all(20.0), child: Center(child: Text('Lỗi: ${snapshot.error}'))),
+                  Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Center(child: Text('Lỗi: ${snapshot.error}'))),
                 if (snapshot.hasData)
                   if (snapshot.data!.isEmpty)
-                    const Padding(padding: EdgeInsets.all(20.0), child: Center(child: Text('Không có buổi nào cần bù.')))
+                    const Padding(
+                        padding: EdgeInsets.all(20.0),
+                        child: Center(child: Text('Không có buổi nào cần bù.')))
                   else
-                    ...snapshot.data!.map((item) => ScheduleDetailItem(
+                    ...snapshot.data!
+                        .map((item) => ScheduleDetailItem(
                       item: item, // Truyền toàn bộ object vào
                       showMakeupButton: true,
                       userId: widget.userId, // Truyền userId để dùng cho điều hướng
                       onUpdate: _loadData, // Callback để tải lại dữ liệu
-                    )).toList(),
+                    ))
+                        .toList(),
               ],
             ),
           ),
@@ -207,10 +256,12 @@ class _LeaveAndMakeupScreenState extends State<LeaveAndMakeupScreen> {
       future: _historyFuture,
       builder: (context, snapshot) {
         final theme = Theme.of(context).copyWith(dividerColor: Colors.transparent);
-        final title = 'Lịch sử nghỉ (${snapshot.hasData ? snapshot.data!.length : 0})';
+        final title =
+            'Lịch sử nghỉ (${snapshot.hasData ? snapshot.data!.length : 0})';
 
         return Card(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           elevation: 1,
           clipBehavior: Clip.antiAlias,
           child: Theme(
@@ -218,17 +269,27 @@ class _LeaveAndMakeupScreenState extends State<LeaveAndMakeupScreen> {
             child: ExpansionTile(
               backgroundColor: Colors.white,
               collapsedBackgroundColor: Colors.white,
-              title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+              title: Text(title,
+                  style: const TextStyle(fontWeight: FontWeight.bold)),
               children: [
                 if (snapshot.connectionState == ConnectionState.waiting)
-                  const Padding(padding: EdgeInsets.all(20.0), child: Center(child: CircularProgressIndicator())),
+                  const Padding(
+                      padding: EdgeInsets.all(20.0),
+                      child: Center(child: CircularProgressIndicator())),
                 if (snapshot.hasError)
-                  Padding(padding: const EdgeInsets.all(20.0), child: Center(child: Text('Lỗi: ${snapshot.error}'))),
+                  Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Center(child: Text('Lỗi: ${snapshot.error}'))),
                 if (snapshot.hasData)
                   if (snapshot.data!.isEmpty)
-                    const Padding(padding: EdgeInsets.all(20.0), child: Center(child: Text('Chưa có lịch sử nghỉ dạy.')))
+                    const Padding(
+                        padding: EdgeInsets.all(20.0),
+                        child:
+                        Center(child: Text('Chưa có lịch sử nghỉ dạy.')))
                   else
-                    ...snapshot.data!.map((item) => LeaveHistoryDetailItem(item: item)).toList(),
+                    ...snapshot.data!
+                        .map((item) => LeaveHistoryDetailItem(item: item))
+                        .toList(),
               ],
             ),
           ),
@@ -239,7 +300,7 @@ class _LeaveAndMakeupScreenState extends State<LeaveAndMakeupScreen> {
 }
 
 //==================================================================
-// MÀN HÌNH 2: ĐĂNG KÝ NGHỈ DẠY
+// MÀN HÌNH 2: ĐĂNG KÝ NGHỈ DẠY (<<< ĐÃ SỬA LOGIC TẢI DỮ LIỆU)
 //==================================================================
 class RegisterLeaveScreen extends StatefulWidget {
   final int userId;
@@ -254,7 +315,8 @@ class _RegisterLeaveScreenState extends State<RegisterLeaveScreen> {
   final _reasonController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
-  late Future<List<AvailableSchedule>> _schedulesFuture;
+  late Future<List<AvailableSchedule>> _mergedSchedulesFuture;
+
   int? _selectedScheduleId;
   // File? _documentFile; // Dành cho upload file
   bool _isSubmitting = false;
@@ -262,7 +324,47 @@ class _RegisterLeaveScreenState extends State<RegisterLeaveScreen> {
   @override
   void initState() {
     super.initState();
-    _schedulesFuture = _apiService.fetchAvailableSchedulesForLeave(widget.userId);
+    _mergedSchedulesFuture = _fetchMergedSchedules();
+  }
+
+  // Hàm gộp dữ liệu từ 2 API
+  Future<List<AvailableSchedule>> _fetchMergedSchedules() async {
+    // Dùng Map để tránh trùng lặp (lấy scheduleId làm key)
+    final Map<int, AvailableSchedule> scheduleMap = {};
+
+    // 1. Tải các lịch "chưa diễn ra"
+    try {
+      final futureSchedules =
+      await _apiService.fetchAvailableSchedulesForLeave(widget.userId);
+      for (var schedule in futureSchedules) {
+        scheduleMap[schedule.scheduleId] = schedule;
+      }
+    } catch (e) {
+      debugPrint("Lỗi tải lịch (tương lai) để nghỉ: $e");
+    }
+
+    // 2. Tải các lịch "hôm nay"
+    try {
+      final homeSummary = await _apiService.fetchHomeSummary(widget.userId);
+      final todaySchedules = homeSummary.schedules;
+
+      for (var schedule in todaySchedules) {
+        if (!scheduleMap.containsKey(schedule.id)) {
+          final displayName =
+              '${schedule.title} (${schedule.courseCode}) - Tiết ${schedule.lessons} (Hôm nay)';
+
+          scheduleMap[schedule.id] = AvailableSchedule(
+            scheduleId: schedule.id,
+            displayName: displayName,
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint("Lỗi tải lịch (hôm nay) để nghỉ: $e");
+    }
+
+    // 3. Trả về danh sách đã gộp
+    return scheduleMap.values.toList();
   }
 
   @override
@@ -272,7 +374,7 @@ class _RegisterLeaveScreenState extends State<RegisterLeaveScreen> {
   }
 
   Future<void> _submitRequest() async {
-    if (!_formKey.currentState!.validate()) return; // Validate form
+    if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isSubmitting = true);
     try {
@@ -284,9 +386,9 @@ class _RegisterLeaveScreenState extends State<RegisterLeaveScreen> {
       );
 
       if (mounted) {
-        final confirmed = await showSuccessDialog(context, 'Gửi yêu cầu nghỉ dạy thành công. Vui lòng chờ duyệt.');
+        final confirmed = await showSuccessDialog(
+            context, 'Gửi yêu cầu nghỉ dạy thành công. Vui lòng chờ duyệt.');
         if (confirmed == true && mounted) {
-          // Trả về 'true' để màn hình trước biết cần tải lại dữ liệu
           Navigator.of(context).pop(true);
         }
       }
@@ -297,25 +399,20 @@ class _RegisterLeaveScreenState extends State<RegisterLeaveScreen> {
     }
   }
 
-  // (Hàm chọn file, ví dụ)
-  // Future<void> _pickFile() async {
-  //   FilePickerResult? result = await FilePicker.platform.pickFiles();
-  //   if (result != null) {
-  //     setState(() {
-  //       _documentFile = File(result.files.single.path!);
-  //     });
-  //   }
-  // }
+  // ... (Giữ nguyên hàm _pickFile nếu bạn dùng) ...
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[200],
       appBar: AppBar(
-        title: const Text('Đăng ký nghỉ dạy', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: const Text('Đăng ký nghỉ dạy',
+            style:
+            TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.blue,
         iconTheme: const IconThemeData(color: Colors.white),
-        elevation: 1, centerTitle: true,
+        elevation: 1,
+        centerTitle: true,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -324,40 +421,62 @@ class _RegisterLeaveScreenState extends State<RegisterLeaveScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Chọn buổi học:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              const Text('Chọn buổi học:',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               const SizedBox(height: 8),
-              // Dropdown động
               FutureBuilder<List<AvailableSchedule>>(
-                future: _schedulesFuture,
+                future: _mergedSchedulesFuture,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
                   }
-                  if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+
+                  if (snapshot.hasError &&
+                      (snapshot.data == null || snapshot.data!.isEmpty)) {
                     return Container(
                       padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
-                      child: const Center(child: Text('Không có lịch dạy nào sắp tới để đăng ký nghỉ.')),
+                      decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12)),
+                      child: const Center(
+                          child: Text('Lỗi khi tải danh sách lịch dạy.')),
+                    );
+                  }
+
+                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12)),
+                      child: const Center(
+                          child: Text(
+                              'Không có lịch dạy nào sắp tới để đăng ký nghỉ.')),
                     );
                   }
 
                   final schedules = snapshot.data!;
                   return Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey.shade300)),
+                    decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey.shade300)),
                     child: DropdownButtonFormField<int>(
                       value: _selectedScheduleId,
                       isExpanded: true,
                       hint: const Text('Chọn lịch dạy'),
                       decoration: const InputDecoration(border: InputBorder.none),
-                      validator: (value) => value == null ? 'Vui lòng chọn một buổi học' : null,
+                      validator: (value) =>
+                      value == null ? 'Vui lòng chọn một buổi học' : null,
                       onChanged: (int? newValue) {
                         setState(() => _selectedScheduleId = newValue);
                       },
                       items: schedules.map((schedule) {
                         return DropdownMenuItem<int>(
                           value: schedule.scheduleId,
-                          child: Text(schedule.displayName, overflow: TextOverflow.ellipsis),
+                          child: Text(schedule.displayName,
+                              overflow: TextOverflow.ellipsis),
                         );
                       }).toList(),
                     ),
@@ -365,7 +484,8 @@ class _RegisterLeaveScreenState extends State<RegisterLeaveScreen> {
                 },
               ),
               const SizedBox(height: 24),
-              const Text('Lý do nghỉ:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              const Text('Lý do nghỉ:',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _reasonController,
@@ -374,24 +494,34 @@ class _RegisterLeaveScreenState extends State<RegisterLeaveScreen> {
                   hintText: 'Vd; Giảng viên bận công tác đột xuất...',
                   filled: true,
                   fillColor: Colors.white,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade300)),
                 ),
-                validator: (value) => (value == null || value.trim().isEmpty) ? 'Vui lòng nhập lý do' : null,
+                validator: (value) => (value == null || value.trim().isEmpty)
+                    ? 'Vui lòng nhập lý do'
+                    : null,
               ),
               const SizedBox(height: 24),
-              const Text('Minh chứng (nếu có):', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              const Text('Minh chứng (nếu có):',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               const SizedBox(height: 8),
-              // (Giao diện upload file)
               GestureDetector(
                 // onTap: _pickFile,
                 child: Container(
                   height: 120,
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey.shade400)),
+                  decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey.shade400)),
                   child: const Center(
-                    child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                      Icon(Icons.upload_file, size: 40, color: Colors.grey),
-                      SizedBox(height: 8), Text('Tải ảnh hoặc file lên'),
-                    ]),
+                    child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.upload_file, size: 40, color: Colors.grey),
+                          SizedBox(height: 8),
+                          Text('Tải ảnh hoặc file lên'),
+                        ]),
                   ),
                 ),
               ),
@@ -406,11 +536,19 @@ class _RegisterLeaveScreenState extends State<RegisterLeaveScreen> {
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.blue,
             padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
           child: _isSubmitting
-              ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white))
-              : const Text('Gửi yêu cầu', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+              ? const SizedBox(
+              height: 20,
+              width: 20,
+              child: CircularProgressIndicator(color: Colors.white))
+              : const Text('Gửi yêu cầu',
+              style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold)),
         ),
       ),
     );
@@ -418,13 +556,14 @@ class _RegisterLeaveScreenState extends State<RegisterLeaveScreen> {
 }
 
 //==================================================================
-// MÀN HÌNH 3: ĐĂNG KÝ DẠY BÙ
+// MÀN HÌNH 3: ĐĂNG KÝ DẠY BÙ (<<< ĐÃ SỬA LỖI)
 //==================================================================
 class RegisterMakeupScreen extends StatefulWidget {
   final int userId;
   final PendingMakeupItem item; // Nhận thông tin buổi cần bù
 
-  const RegisterMakeupScreen({super.key, required this.userId, required this.item});
+  const RegisterMakeupScreen(
+      {super.key, required this.userId, required this.item});
 
   @override
   State<RegisterMakeupScreen> createState() => _RegisterMakeupScreenState();
@@ -438,13 +577,35 @@ class _RegisterMakeupScreenState extends State<RegisterMakeupScreen> {
   // State cho form
   DateTime? _newDate;
   String? _newSession; // Ví dụ: "Tiết 1-3"
-  int? _newRoomId;     // Ví dụ: 101
+  int? _newRoomId; // Ví dụ: 101
 
   // Dữ liệu tạm thời cho dropdowns (nên lấy từ API trong thực tế)
-  final List<String> _sessions = ['Tiết 1-3', 'Tiết 4-6', 'Tiết 7-9', 'Tiết 10-12'];
-  final Map<int, String> _rooms = {101: 'Phòng 101-B5', 102: 'Phòng 202-B5'};
+  final List<String> _sessions = [
+    'Tiết 1-3',
+    'Tiết 4-6',
+    'Tiết 7-9',
+    'Tiết 10-12'
+  ];
+
+  // --- 👇 SỬA LỖI ---
+  // 1. Xóa Map hardcoded
+  // final Map<int, String> _rooms = {101: 'Phòng 101-B5', 102: 'Phòng 202-B5'};
+
+  // 2. Thêm Future để tải phòng học
+  late Future<List<Room>> _roomsFuture;
+  // --- 👆 KẾT THÚC SỬA ---
 
   bool _isSubmitting = false;
+
+  // --- 👇 SỬA LỖI ---
+  // 3. Tải dữ liệu phòng trong initState
+  @override
+  void initState() {
+    super.initState();
+    // Gọi API để lấy danh sách phòng khi màn hình được tải
+    _roomsFuture = _apiService.fetchAvailableRooms();
+  }
+  // --- 👆 KẾT THÚC SỬA ---
 
   @override
   void dispose() {
@@ -465,9 +626,9 @@ class _RegisterMakeupScreenState extends State<RegisterMakeupScreen> {
         note: _noteController.text,
       );
       if (mounted) {
-        final confirmed = await showSuccessDialog(context, 'Đăng ký dạy bù thành công. Vui lòng chờ duyệt.');
+        final confirmed = await showSuccessDialog(
+            context, 'Đăng ký dạy bù thành công. Vui lòng chờ duyệt.');
         if (confirmed == true && mounted) {
-          // Pop về màn hình chính và báo cho nó tải lại
           Navigator.of(context).pop(true);
         }
       }
@@ -483,10 +644,13 @@ class _RegisterMakeupScreenState extends State<RegisterMakeupScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[200],
       appBar: AppBar(
-        title: const Text('Đăng ký dạy bù', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: const Text('Đăng ký dạy bù',
+            style:
+            TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.blue,
         iconTheme: const IconThemeData(color: Colors.white),
-        elevation: 1, centerTitle: true,
+        elevation: 1,
+        centerTitle: true,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -495,23 +659,33 @@ class _RegisterMakeupScreenState extends State<RegisterMakeupScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Buổi học đã nghỉ:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              const Text('Buổi học đã nghỉ:',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               const SizedBox(height: 8),
-              // Hiển thị thông tin buổi nghỉ
               Card(
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: Colors.red.shade200)),
-                child: ScheduleDetailItem(item: widget.item, showMakeupButton: false, userId: widget.userId, onUpdate: () {}),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: BorderSide(color: Colors.red.shade200)),
+                child: ScheduleDetailItem(
+                    item: widget.item,
+                    showMakeupButton: false,
+                    userId: widget.userId,
+                    onUpdate: () {}),
               ),
               const SizedBox(height: 24),
 
               // --- Form đăng ký ---
-              // Chọn ngày bù
-              const Text('Chọn ngày dạy bù:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              const Text('Chọn ngày dạy bù:',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               const SizedBox(height: 8),
               InkWell(
                 onTap: () async {
-                  final picked = await showDatePicker(context: context, initialDate: DateTime.now(), firstDate: DateTime.now(), lastDate: DateTime.now().add(const Duration(days: 60)));
+                  final picked = await showDatePicker(
+                      context: context,
+                      initialDate: DateTime.now(),
+                      firstDate: DateTime.now(),
+                      lastDate: DateTime.now().add(const Duration(days: 60)));
                   if (picked != null) setState(() => _newDate = picked);
                 },
                 child: InputDecorator(
@@ -519,41 +693,107 @@ class _RegisterMakeupScreenState extends State<RegisterMakeupScreen> {
                     filled: true,
                     fillColor: Colors.white,
                     suffixIcon: const Icon(Icons.calendar_today),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey.shade300)),
                   ),
-                  child: Text(_newDate == null ? 'dd/mm/yyyy' : DateFormat('dd/MM/yyyy').format(_newDate!)),
+                  child: Text(_newDate == null
+                      ? 'dd/mm/yyyy'
+                      : DateFormat('dd/MM/yyyy').format(_newDate!)),
                 ),
               ),
               const SizedBox(height: 16),
 
-              // Chọn ca bù
-              const Text('Chọn ca dạy bù:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              const Text('Chọn ca dạy bù:',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
                 value: _newSession,
                 hint: const Text('Chọn ca/tiết học'),
-                decoration: InputDecoration(filled: true, fillColor: Colors.white, border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300))),
+                decoration: InputDecoration(
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey.shade300))),
                 validator: (v) => v == null ? 'Vui lòng chọn ca học' : null,
-                items: _sessions.map((session) => DropdownMenuItem(value: session, child: Text(session))).toList(),
+                items: _sessions
+                    .map((session) =>
+                    DropdownMenuItem(value: session, child: Text(session)))
+                    .toList(),
                 onChanged: (value) => setState(() => _newSession = value),
               ),
               const SizedBox(height: 16),
 
-              // Chọn phòng bù
-              const Text('Chọn phòng học:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              // --- 👇 SỬA LỖI ---
+              // 4. Thay DropdownButtonFormField bằng FutureBuilder
+              const Text('Chọn phòng học:',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               const SizedBox(height: 8),
-              DropdownButtonFormField<int>(
-                value: _newRoomId,
-                hint: const Text('Chọn phòng học'),
-                decoration: InputDecoration(filled: true, fillColor: Colors.white, border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300))),
-                validator: (v) => v == null ? 'Vui lòng chọn phòng học' : null,
-                items: _rooms.entries.map((entry) => DropdownMenuItem(value: entry.key, child: Text(entry.value))).toList(),
-                onChanged: (value) => setState(() => _newRoomId = value),
+              FutureBuilder<List<Room>>(
+                future: _roomsFuture,
+                builder: (context, snapshot) {
+                  // Trường hợp 1: Đang tải dữ liệu
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  // Trường hợp 2: Bị lỗi khi tải
+                  if (snapshot.hasError) {
+                    return Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                          color: Colors.red.shade50,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.red.shade200)),
+                      child: Text('Lỗi tải phòng: ${snapshot.error}',
+                          style: TextStyle(color: Colors.red.shade800)),
+                    );
+                  }
+
+                  // Trường hợp 3: Không có dữ liệu
+                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey.shade300)
+                      ),
+                      child: const Center(
+                          child: Text('Không có phòng học nào khả dụng.')),
+                    );
+                  }
+
+                  // Trường hợp 4: Tải thành công
+                  final rooms = snapshot.data!;
+                  return DropdownButtonFormField<int>(
+                    value: _newRoomId,
+                    isExpanded: true,
+                    hint: const Text('Chọn phòng học'),
+                    decoration: InputDecoration(
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide:
+                            BorderSide(color: Colors.grey.shade300))),
+                    validator: (v) => v == null ? 'Vui lòng chọn phòng học' : null,
+                    items: rooms.map((room) {
+                      return DropdownMenuItem<int>(
+                        value: room.id,
+                        child: Text(room.name, overflow: TextOverflow.ellipsis),
+                      );
+                    }).toList(),
+                    onChanged: (value) => setState(() => _newRoomId = value),
+                  );
+                },
               ),
+              // --- 👆 KẾT THÚC SỬA ---
               const SizedBox(height: 16),
 
-              // Ghi chú
-              const Text('Ghi chú:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              const Text('Ghi chú:',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _noteController,
@@ -562,7 +802,9 @@ class _RegisterMakeupScreenState extends State<RegisterMakeupScreen> {
                   hintText: 'Ghi chú thêm (nếu có)',
                   filled: true,
                   fillColor: Colors.white,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade300)),
                 ),
               ),
             ],
@@ -576,11 +818,19 @@ class _RegisterMakeupScreenState extends State<RegisterMakeupScreen> {
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.blue,
             padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
           child: _isSubmitting
-              ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white))
-              : const Text('Gửi yêu cầu bù', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+              ? const SizedBox(
+              height: 20,
+              width: 20,
+              child: CircularProgressIndicator(color: Colors.white))
+              : const Text('Gửi yêu cầu bù',
+              style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold)),
         ),
       ),
     );
@@ -591,11 +841,10 @@ class _RegisterMakeupScreenState extends State<RegisterMakeupScreen> {
 // WIDGET TÁI SỬ DỤNG CHO CHI TIẾT LỊCH HỌC
 //==================================================================
 class ScheduleDetailItem extends StatelessWidget {
-  // Sửa lại để nhận một object thay vì nhiều biến
   final PendingMakeupItem item;
   final bool showMakeupButton;
   final int userId;
-  final VoidCallback onUpdate; // Callback để tải lại dữ liệu
+  final VoidCallback onUpdate;
 
   const ScheduleDetailItem({
     super.key,
@@ -604,6 +853,31 @@ class ScheduleDetailItem extends StatelessWidget {
     required this.userId,
     required this.onUpdate,
   });
+
+  // <<< SỬA 2: Thêm hàm helper (giống hệt trong HomeScreen)
+  String _convertLessonsToTime(String lessonString) {
+    if (lessonString.isEmpty) return "N/A";
+    List<int> lessons = [];
+    try {
+      if (lessonString.contains('-')) {
+        final parts = lessonString.split('-');
+        final int start = int.parse(parts[0].trim());
+        final int end = int.parse(parts[1].trim());
+        if (end < start) return lessonString;
+        for (int i = start; i <= end; i++) {
+          lessons.add(i);
+        }
+      } else {
+        lessons.add(int.parse(lessonString.trim()));
+      }
+      if (lessons.isEmpty) return lessonString;
+
+      return ScheduleUtils.getLessonTimeRange(lessons);
+    } catch (e) {
+      debugPrint('Lỗi parse chuỗi tiết học: $e');
+      return lessonString; // Nếu lỗi, trả về chuỗi gốc
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -614,14 +888,28 @@ class ScheduleDetailItem extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Container(width: 4.0, decoration: BoxDecoration(color: Colors.orange, borderRadius: BorderRadius.circular(2.0))),
+            Container(
+                width: 4.0,
+                decoration: BoxDecoration(
+                    color: Colors.orange,
+                    borderRadius: BorderRadius.circular(2.0))),
             const SizedBox(width: 12.0),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(item.timeRange, style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 18)),
-                Text(item.lessonPeriod, style: const TextStyle(color: Colors.grey, fontSize: 14)),
+                // <<< SỬA 3: Hiển thị giờ thay vì tiết
+                Text(
+                    _convertLessonsToTime(
+                        item.lessonPeriod), // Dùng lessonPeriod (ví dụ "7-9") để tính toán
+                    style: const TextStyle(
+                        color: Colors.red,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18)),
+                // <<< SỬA 4: Hiển thị "Tiết 7-9"
+                Text('Tiết ${item.lessonPeriod}', // Hiển thị rõ là "Tiết"
+                    style:
+                    const TextStyle(color: Colors.grey, fontSize: 14)),
               ],
             ),
             const SizedBox(width: 16.0),
@@ -629,12 +917,18 @@ class ScheduleDetailItem extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('${item.subjectName} ${item.courseCode}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, height: 1.3)),
+                  Text('${item.subjectName} ${item.courseCode}',
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                          height: 1.3)),
                   const SizedBox(height: 6.0),
                   Row(children: [
                     Icon(Icons.location_on, color: Colors.blue[700], size: 16),
                     const SizedBox(width: 4.0),
-                    Text(item.location, style: TextStyle(color: Colors.blue[700], fontSize: 14)),
+                    Text(item.location,
+                        style:
+                        TextStyle(color: Colors.blue[700], fontSize: 14)),
                   ]),
                   if (showMakeupButton) ...[
                     const Spacer(),
@@ -644,15 +938,20 @@ class ScheduleDetailItem extends StatelessWidget {
                         onPressed: () async {
                           final result = await Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => RegisterMakeupScreen(userId: userId, item: item)),
+                            MaterialPageRoute(
+                                builder: (context) => RegisterMakeupScreen(
+                                    userId: userId, item: item)),
                           );
-                          // Nếu màn hình đăng ký bù trả về true (nghĩa là đã gửi thành công), tải lại dữ liệu
                           if (result == true) onUpdate();
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red.shade100, foregroundColor: Colors.red.shade800,
-                          elevation: 0, padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                          textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                          backgroundColor: Colors.red.shade100,
+                          foregroundColor: Colors.red.shade800,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 4),
+                          textStyle: const TextStyle(
+                              fontSize: 12, fontWeight: FontWeight.bold),
                         ),
                         child: const Text('Đăng ký dạy bù'),
                       ),
@@ -676,10 +975,38 @@ class LeaveHistoryDetailItem extends StatelessWidget {
   // Helper để lấy màu và text cho status
   (Color, String) _getStatusInfo(String status) {
     switch (status) {
-      case 'approved': return (Colors.green, 'Đã duyệt');
-      case 'rejected': return (Colors.red, 'Đã từ chối');
+      case 'approved':
+        return (Colors.green, 'Đã duyệt');
+      case 'rejected':
+        return (Colors.red, 'Đã từ chối');
       case 'pending':
-      default: return (Colors.orange, 'Chờ duyệt');
+      default:
+        return (Colors.orange, 'Chờ duyệt');
+    }
+  }
+
+  // <<< SỬA 5: Thêm hàm helper (giống hệt bên trên)
+  String _convertLessonsToTime(String lessonString) {
+    if (lessonString.isEmpty) return "N/A";
+    List<int> lessons = [];
+    try {
+      if (lessonString.contains('-')) {
+        final parts = lessonString.split('-');
+        final int start = int.parse(parts[0].trim());
+        final int end = int.parse(parts[1].trim());
+        if (end < start) return lessonString;
+        for (int i = start; i <= end; i++) {
+          lessons.add(i);
+        }
+      } else {
+        lessons.add(int.parse(lessonString.trim()));
+      }
+      if (lessons.isEmpty) return lessonString;
+
+      return ScheduleUtils.getLessonTimeRange(lessons);
+    } catch (e) {
+      debugPrint('Lỗi parse chuỗi tiết học: $e');
+      return lessonString; // Nếu lỗi, trả về chuỗi gốc
     }
   }
 
@@ -700,34 +1027,47 @@ class LeaveHistoryDetailItem extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(item.dateString, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      // <<< SỬA 6: Hiển thị Ngày | Giờ (đã chuyển đổi)
+                      Text(
+                          '${item.dateString}  |  ${_convertLessonsToTime(item.lessonPeriod)}', // <<< *** SỬA LỖI Ở ĐÂY ***
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 16)),
                       const SizedBox(height: 4),
-                      Text('${item.subjectName} ${item.courseCode}', style: const TextStyle(color: Colors.black87, fontSize: 15)),
+                      Text('${item.subjectName} ${item.courseCode}',
+                          style: const TextStyle(
+                              color: Colors.black87, fontSize: 15)),
                     ],
                   ),
                 ),
                 const SizedBox(width: 16),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(color: statusColor.withOpacity(0.1), borderRadius: BorderRadius.circular(20)),
-                  child: Text(statusText, style: TextStyle(color: statusColor, fontWeight: FontWeight.bold, fontSize: 12)),
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                      color: statusColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20)),
+                  child: Text(statusText,
+                      style: TextStyle(
+                          color: statusColor,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12)),
                 )
               ],
             ),
             const SizedBox(height: 8),
             Divider(color: Colors.grey.shade200),
             const SizedBox(height: 8),
-            Text('Lý do: ${item.reason}', style: TextStyle(color: Colors.grey.shade700, fontStyle: FontStyle.italic)),
+            Text('Lý do: ${item.reason}',
+                style: TextStyle(
+                    color: Colors.grey.shade700, fontStyle: FontStyle.italic)),
           ],
-        )
-    );
+        ));
   }
 }
 
 //==================================================================
-// HÀM TÁI SỬ DỤNG ĐỂ HIỂN THỊ DIALOG
+// HÀM TÁI SỬ DỤNG ĐỂ HIỂN THỊ DIALOG (Giữ nguyên)
 //==================================================================
-// (Giữ nguyên showSuccessDialog và thêm showErrorDialog)
 
 Future<bool?> showSuccessDialog(BuildContext context, String message) {
   if (!context.mounted) return Future.value(false);
@@ -736,11 +1076,11 @@ Future<bool?> showSuccessDialog(BuildContext context, String message) {
     builder: (BuildContext context) {
       return AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
+        title: const Row(
           children: [
-            const Icon(Icons.check_circle_outline, color: Colors.green),
-            const SizedBox(width: 10),
-            const Text('Thành công!', style: TextStyle(fontWeight: FontWeight.bold)),
+            Icon(Icons.check_circle_outline, color: Colors.green),
+            SizedBox(width: 10),
+            Text('Thành công!', style: TextStyle(fontWeight: FontWeight.bold)),
           ],
         ),
         content: Text(message),
@@ -761,7 +1101,11 @@ Future<void> showErrorDialog(BuildContext context, String message) {
     context: context,
     builder: (context) => AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      title: const Row(children: [Icon(Icons.error, color: Colors.red), SizedBox(width: 8), Text("Lỗi!")]),
+      title: const Row(children: [
+        Icon(Icons.error, color: Colors.red),
+        SizedBox(width: 8),
+        Text("Lỗi!")
+      ]),
       content: Text(message),
       actions: [
         TextButton(

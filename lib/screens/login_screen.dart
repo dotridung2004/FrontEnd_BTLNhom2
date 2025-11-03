@@ -6,7 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../api_service.dart';
 import '../table/user.dart';
 import 'home_screen.dart'; // Màn hình cho Giáo viên
-import 'student_home_screen.dart'; // 👈 *** THÊM IMPORT CHO MÀN HÌNH SINH VIÊN ***
+import 'student_home_screen.dart'; // Màn hình cho Sinh viên
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -26,31 +26,48 @@ class _LoginScreenState extends State<LoginScreen> {
   final ApiService _apiService = ApiService();
   final _storage = const FlutterSecureStorage();
 
+  // --- TỐI ƯU 1: Cache instance của SharedPreferences ---
+  // Chúng ta sẽ lấy nó 1 lần trong initState và dùng lại
+  late final SharedPreferences _prefs;
+  bool _isInitLoading = true; // Cờ để biết đang tải dữ liệu ban đầu
+
   @override
   void initState() {
     super.initState();
     _loadSavedCredentials();
   }
 
+  /// ---------------------------------------------------
+  /// 🔄 CẬP NHẬT: Tải thông tin nhanh hơn
+  /// ---------------------------------------------------
   Future<void> _loadSavedCredentials() async {
-    final prefs = await SharedPreferences.getInstance();
-    final bool remembered = prefs.getBool('rememberMe') ?? false;
+    // Lấy instance 1 lần và cache lại
+    _prefs = await SharedPreferences.getInstance();
+
+    final bool remembered = _prefs.getBool('rememberMe') ?? false;
+
+    String? email;
+    String? password;
+
+    if (remembered) {
+      // Đọc song song 2 key từ storage
+      final credentials = await Future.wait([
+        _storage.read(key: 'email'),
+        _storage.read(key: 'password'),
+      ]);
+      email = credentials[0];
+      password = credentials[1];
+    }
 
     if (mounted) {
       setState(() {
         _rememberMe = remembered;
-      });
-    }
-
-    if (remembered) {
-      final email = await _storage.read(key: 'email');
-      final password = await _storage.read(key: 'password');
-      if (mounted && email != null && password != null) {
-        setState(() {
+        if (remembered && email != null && password != null) {
           _emailController.text = email;
           _passwordController.text = password;
-        });
-      }
+        }
+        _isInitLoading = false; // Tải xong, sẵn sàng để build
+      });
     }
   }
 
@@ -62,7 +79,33 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   /// ---------------------------------------------------
-  /// 🔄 CẬP NHẬT: Hàm xử lý đăng nhập và điều hướng
+  /// 🚀 TỐI ƯU: Hàm lưu trữ chạy ngầm
+  /// ---------------------------------------------------
+  /// Hàm này sẽ lưu trữ thông tin đăng nhập trong nền
+  /// mà không bắt người dùng phải chờ.
+  Future<void> _saveCredentialsInBackground(String email, String password) async {
+    try {
+      // Chạy song song tất cả các tác vụ lưu trữ
+      await Future.wait([
+        _prefs.setBool('rememberMe', _rememberMe),
+        if (_rememberMe) ...[
+          _storage.write(key: 'email', value: email),
+          _storage.write(key: 'password', value: password),
+        ] else ...[
+          // Nếu không "Ghi nhớ", xoá key song song
+          _storage.delete(key: 'email'),
+          _storage.delete(key: 'password'),
+        ]
+      ]);
+      debugPrint("Lưu trữ thông tin đăng nhập thành công.");
+    } catch (e) {
+      // Lỗi lưu trữ không nên cản trở người dùng
+      debugPrint("Lỗi khi lưu trữ thông tin đăng nhập trong nền: $e");
+    }
+  }
+
+  /// ---------------------------------------------------
+  /// 🚀 TỐI ƯU: Hàm xử lý đăng nhập và điều hướng
   /// ---------------------------------------------------
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
@@ -71,64 +114,52 @@ class _LoginScreenState extends State<LoginScreen> {
 
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
-    final prefs = await SharedPreferences.getInstance();
 
     try {
       // 1. Gọi API login, API sẽ kiểm tra status
       final user = await _apiService.login(email, password);
 
-      // --- Logic lưu trữ "Ghi nhớ" ---
-      await prefs.setBool('rememberMe', _rememberMe);
-      if (_rememberMe) {
-        await _storage.write(key: 'email', value: email);
-        await _storage.write(key: 'password', value: password);
-      } else {
-        await _storage.delete(key: 'email');
-        await _storage.delete(key: 'password');
-      }
-      // --- Kết thúc logic lưu trữ ---
+      // 2. ✨ TỐI ƯU: Bắt đầu lưu trữ nhưng KHÔNG await
+      // Tác vụ này sẽ chạy trong nền.
+      _saveCredentialsInBackground(email, password);
 
-      // 2. Kiểm tra vai trò và điều hướng đến màn hình tương ứng
+      // 3. ✨ TỐI ƯU: Điều hướng NGAY LẬP TỨC
       if (mounted) {
+        // Xác định màn hình đích
+        Widget destinationScreen;
         if (user.role == 'teacher') {
-          // ---------------------------------
-          // 👉 ĐIỀU HƯỚNG TỚI TRANG GIÁO VIÊN
-          // ---------------------------------
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => HomeScreen(userId: user.id),
-            ),
-          );
+          destinationScreen = HomeScreen(userId: user.id);
         } else if (user.role == 'student') {
-          // ---------------------------------
-          // 👉 ĐIỀU HƯỚNG TỚI TRANG SINH VIÊN
-          // ---------------------------------
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => StudentHomeScreen(userId: user.id),
-            ),
-          );
+          destinationScreen = StudentHomeScreen(userId: user.id);
         } else {
           // Xử lý các vai trò khác không được hỗ trợ
-          throw Exception('Vai trò của bạn không được hỗ trợ để đăng nhập vào ứng dụng này.');
+          throw Exception('Vai trò của bạn không được hỗ trợ để đăng nhập.');
         }
+
+        // Chuyển màn hình
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => destinationScreen),
+        );
+
+        // return ngay lập tức, không cần đợi lưu trữ
+        return;
       }
     } catch (e) {
-      // Bắt tất cả các lỗi (sai pass, bị khóa, không kết nối được, vai trò không hợp lệ,...)
+      // Bắt tất cả các lỗi (sai pass, bị khóa, vai trò không hợp lệ,...)
       debugPrint('Lỗi đăng nhập: $e');
       if (mounted) {
         _showErrorDialog(e.toString());
-      }
-    } finally {
-      if (mounted) {
+        // ✨ SỬA LỖI: Tắt loading khi có lỗi
         setState(() => _isLoading = false);
       }
     }
+    // ✨ SỬA LỖI: Đã loại bỏ 'finally' block để tránh lỗi
+    // 'setState called after dispose' khi đăng nhập thành công.
   }
 
   void _showErrorDialog(String errorMessage) {
+    // ... (Hàm này giữ nguyên, không cần thay đổi) ...
     final displayMessage = errorMessage.replaceFirst('Exception: ', '').replaceAll('❌ ', '');
     showDialog(
       context: context,
@@ -159,6 +190,15 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // --- TỐI ƯU: Hiển thị loading screen trong khi tải SharedPreferences ---
+    if (_isInitLoading) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     // ... Toàn bộ code giao diện của bạn giữ nguyên ...
     return Scaffold(
       body: Container(
@@ -291,6 +331,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _buildLogo() {
+    // ... (Hàm này giữ nguyên, không cần thay đổi) ...
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -351,6 +392,7 @@ class _LoginScreenState extends State<LoginScreen> {
     bool isPassword = false,
     String? Function(String?)? validator,
   }) {
+    // ... (Hàm này giữ nguyên, không cần thay đổi) ...
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:btl_nhom2/api_service.dart';
 import 'package:btl_nhom2/table/schedule_week_data.dart';
 import 'package:btl_nhom2/table/teaching_schedule.dart';
+import 'package:btl_nhom2/utils/schedule_utils.dart'; // <-- BỔ SUNG IMPORT
 import '../widgets/schedule_card.dart'; // Giữ nguyên import của bạn
 
 class ScheduleScreen extends StatefulWidget {
@@ -16,8 +17,8 @@ class ScheduleScreen extends StatefulWidget {
 }
 
 class _ScheduleScreenState extends State<ScheduleScreen> {
-  // Quản lý State
-  bool _isTodayView = false; // Bắt đầu với view Tuần này
+  // Quản lý State (Trạng thái)
+  bool _isTodayView = false; // Bắt đầu với chế độ xem "Tuần này"
   int _selectedDateIndex = 0; // Index của ngày được chọn trong tuần
   int _weekOffset = 0; // 0 = tuần này, -1 = tuần trước, 1 = tuần sau
 
@@ -32,12 +33,69 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   void initState() {
     super.initState();
     // Tải dữ liệu lần đầu
-    _loadData();
+    // --- ⬇️ SỬA LỖI LOGIC 1: Gán Future và CHUỖI .then() ---
+    _scheduleDataFuture = _apiService.fetchScheduleData(widget.userId, _weekOffset);
+    // Tự động chọn ngày hôm nay KHI dữ liệu được tải xong LẦN ĐẦU
+    _scheduleDataFuture.then((data) {
+      if (mounted && _weekOffset == 0) {
+        setState(() {
+          _selectedDateIndex = data.weekData.todayIndex;
+        });
+      }
+    });
+    // --- ⬆️ KẾT THÚC SỬA LỖI 1 ---
   }
 
   // Hàm gọi API
   void _loadData() {
-    _scheduleDataFuture = _apiService.fetchScheduleData(widget.userId, _weekOffset);
+    // --- ⬇️ SỬA LỖI LOGIC 2: Gán Future MỚI và CHUỖI .then() ---
+    var newFuture = _apiService.fetchScheduleData(widget.userId, _weekOffset);
+
+    // Tự động chọn ngày (ngày đầu tuần, hoặc ngày hôm nay nếu về tuần hiện tại)
+    newFuture.then((data) {
+      if (mounted) {
+        int newIndex = 0; // Mặc định là ngày đầu tuần
+        if (_weekOffset == 0) {
+          // Nếu quay về tuần hiện tại, chọn ngày hôm nay
+          newIndex = data.weekData.todayIndex;
+        }
+        setState(() {
+          _selectedDateIndex = newIndex;
+        });
+      }
+    });
+
+    // Cập nhật FutureBuilder
+    setState(() {
+      _scheduleDataFuture = newFuture;
+    });
+    // --- ⬆️ KẾT THÚC SỬA LỖI 2 ---
+  }
+
+  // <<< MỚI: Thêm hàm chuyển đổi Tiết -> Giờ (Giống HomeScreen) >>>
+  String _convertLessonsToTime(String lessonString) {
+    if (lessonString.isEmpty) return "N/A";
+    List<int> lessons = [];
+    try {
+      if (lessonString.contains('-')) {
+        final parts = lessonString.split('-');
+        final int start = int.parse(parts[0].trim());
+        final int end = int.parse(parts[1].trim());
+        if (end < start) return lessonString;
+        for (int i = start; i <= end; i++) {
+          lessons.add(i);
+        }
+      } else {
+        lessons.add(int.parse(lessonString.trim()));
+      }
+      if (lessons.isEmpty) return lessonString;
+
+      // Gọi hàm từ ScheduleUtils
+      return ScheduleUtils.getLessonTimeRange(lessons);
+    } catch (e) {
+      debugPrint('Lỗi phân tích chuỗi tiết học: $e');
+      return lessonString; // Nếu lỗi, trả về chuỗi gốc
+    }
   }
 
   // Hàm build giao diện chính
@@ -48,7 +106,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       body: FutureBuilder<ScheduleWeekData>(
         future: _scheduleDataFuture,
         builder: (context, snapshot) {
-          // 1. TRẠNG THÁI LOADING
+          // 1. TRẠNG THÁI ĐANG TẢI
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -73,19 +131,17 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
           final todayData = scheduleData.todayData;
           final weekData = scheduleData.weekData;
 
-          // Cập nhật index ngày được chọn nếu là tuần hiện tại
-          if (_weekOffset == 0) {
-            _selectedDateIndex = weekData.todayIndex;
-          }
-
           // Xác định danh sách lịch dạy cần hiển thị
           if (_isTodayView) {
             _currentSchedules = todayData.schedules;
           } else {
-            // Lấy ngày được chọn từ list `dates`
-            final selectedDateKey = weekData.dates[_selectedDateIndex].fullDate;
-            // Lấy lịch từ map `schedulesByDate`
-            _currentSchedules = weekData.schedulesByDate[selectedDateKey] ?? [];
+            // Kiểm tra an toàn trước khi truy cập index
+            if (_selectedDateIndex >= 0 && _selectedDateIndex < weekData.dates.length) {
+              final selectedDateKey = weekData.dates[_selectedDateIndex].fullDate;
+              _currentSchedules = weekData.schedulesByDate[selectedDateKey] ?? [];
+            } else {
+              _currentSchedules = []; // Mặc định là rỗng nếu index sai
+            }
           }
 
           // Trả về giao diện chính
@@ -110,16 +166,26 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                   itemCount: _currentSchedules.length,
                   itemBuilder: (context, index) {
                     final schedule = _currentSchedules[index];
+
+                    // --- ⬇️ SỬA LỖI TIẾNG ANH TẠI ĐÂY ⬇️ ---
+                    // 1. Lấy màu dựa trên trạng thái (tiếng Anh) từ DB
                     final color = _getStatusColor(schedule.status);
+                    // 2. Lấy chữ (tiếng Việt) dựa trên trạng thái
+                    final vietnameseStatus = _getVietnameseStatus(schedule.status);
+                    // --- ⬆️ KẾT THÚC SỬA LỖI ⬆️ ---
+
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 16.0),
                       child: ScheduleCard(
-                        time: schedule.time,
-                        lessons: schedule.lessons,
+                        time: _convertLessonsToTime(schedule.lessons),
+                        lessons: 'Tiết ${schedule.lessons}',
                         title: schedule.title,
                         courseCode: schedule.courseCode,
                         location: schedule.location,
-                        status: schedule.status,
+
+                        // Truyền trạng thái đã được dịch sang tiếng Việt
+                        status: vietnameseStatus,
+
                         statusColor: color,
                         borderColor: color,
                       ),
@@ -134,7 +200,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     );
   }
 
-  // --- CÁC WIDGET HELPER ĐÃ CẬP NHẬT ---
+  // --- CÁC WIDGET HỖ TRỢ ĐÃ CẬP NHẬT ---
 
   // (Hàm này giữ nguyên như cũ)
   Widget _buildTopToggle() {
@@ -234,26 +300,19 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                 onPressed: () {
                   setState(() {
                     _weekOffset--; // Giảm offset
-                    _selectedDateIndex = 0; // Chọn ngày đầu tuần mới
                     _loadData(); // Tải lại dữ liệu cho tuần trước
                   });
                 },
               ),
 
-              // --- ⬇️ SỬA LỖI OVERFLOW TẠI ĐÂY ⬇️ ---
-              // 1. Thay thế SizedBox bằng Expanded
+              // (Giữ nguyên code của bạn, đã chuẩn)
               Expanded(
                 child: SizedBox(
                   height: 60,
-                  // 2. Bỏ 'width' cố định đi
-                  // width: MediaQuery.of(context).size.width - 120,
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
                     itemCount: weekData.dates.length, // 👈 Dùng list từ API
-                    // 3. (QUAN TRỌNG) Thêm 2 dòng này để căn giữa
-                    // nếu không đủ 7 ngày (ví dụ chỉ có 5)
                     physics: const AlwaysScrollableScrollPhysics(),
-                    // Bỏ padding mặc định của ListView
                     padding: EdgeInsets.zero,
                     itemBuilder: (context, index) {
                       final date = weekData.dates[index];
@@ -271,12 +330,12 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                date.dayName, // 👈 Dữ liệu động
+                                date.dayName, // Dữ liệu động
                                 style: TextStyle(color: isSelected ? Colors.white : Colors.black, fontSize: 12),
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                date.dayNumber, // 👈 Dữ liệu động
+                                date.dayNumber, // Dữ liệu động
                                 style: TextStyle(
                                   color: isSelected ? Colors.white : Colors.black,
                                   fontWeight: FontWeight.bold,
@@ -291,7 +350,6 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                   ),
                 ),
               ),
-              // --- ⬆️ KẾT THÚC SỬA LỖI ⬆️ ---
 
               // Nút Tiến Tuần
               IconButton(
@@ -299,7 +357,6 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                 onPressed: () {
                   setState(() {
                     _weekOffset++; // Tăng offset
-                    _selectedDateIndex = 0; // Chọn ngày đầu tuần mới
                     _loadData(); // Tải lại dữ liệu cho tuần sau
                   });
                 },
@@ -311,7 +368,10 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
           child: Text(
-            weekData.dates[_selectedDateIndex].fullDateString, // 👈 Dữ liệu động
+            // Kiểm tra an toàn trước khi truy cập index
+            (_selectedDateIndex >= 0 && _selectedDateIndex < weekData.dates.length)
+                ? weekData.dates[_selectedDateIndex].fullDateString // Dữ liệu động
+                : "Vui lòng chọn ngày",
             style: TextStyle(fontSize: 16, color: Colors.grey[600]),
           ),
         ),
@@ -319,15 +379,41 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     );
   }
 
-  // Helper lấy màu (copy từ HomeScreen)
+  // --- ⬇️ HÀM MỚI ĐỂ DỊCH SANG TIẾNG VIỆT ⬇️ ---
+  String _getVietnameseStatus(String status) {
+    switch (status) {
+      case 'scheduled':
+        return 'Đã lên lịch';
+      case 'taught':
+        return 'Đã dạy';
+      case 'cancelled':
+        return 'Đã hủy';
+      case 'makeup': // <<< SỬA: THÊM TRẠNG THÁI DẠY BÙ
+        return 'Dạy bù';
+      case 'Đang diễn ra': // Giữ lại các trạng thái cũ phòng trường hợp API trả về
+        return 'Đang diễn ra';
+      case 'Sắp diễn ra':
+        return 'Sắp diễn ra';
+      case 'Đã kết thúc':
+        return 'Đã kết thúc';
+      default:
+        return status; // Trả về nguyên bản nếu không nhận dạng được
+    }
+  }
+
+  // Hàm hỗ trợ lấy màu (sao chép từ HomeScreen)
   Color _getStatusColor(String status) {
+    // Hàm này VẪN DÙNG TIẾNG ANH (vì nó đọc dữ liệu gốc từ DB)
     if (status == 'Đang diễn ra') return Colors.green;
     if (status == 'Sắp diễn ra') return Colors.orange;
     if (status == 'Đã kết thúc') return Colors.grey;
-    // Thêm các status từ DB của bạn
+
+    // Thêm các trạng thái từ DB của bạn
     if (status == 'scheduled') return Colors.blue;
     if (status == 'taught') return Colors.green;
     if (status == 'cancelled') return Colors.red;
-    return Colors.blue;
+    if (status == 'makeup') return Colors.blue; // <<< SỬA: THÊM MÀU CHO DẠY BÙ
+
+    return Colors.blue; // Màu mặc định
   }
 }

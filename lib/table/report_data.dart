@@ -5,8 +5,8 @@
 class ReportDetailItem {
   final int id;
   final String dateString; // e.g., "12/9"
-  final String time; // e.g., "Tiết 1-3"
-  final String lessons; // e.g., "Tiết 1-3"
+  // final String time; // <<< SỬA: Xóa trường "time" không dùng đến và không có trong JSON
+  final String lessons; // e.g., "1-3"
   final String title; // Subject name
   final String courseCode; // Class code e.g., "(20CT1)"
   final String location;
@@ -17,7 +17,7 @@ class ReportDetailItem {
   ReportDetailItem({
     required this.id,
     required this.dateString,
-    required this.time,
+    // required this.time, // <<< SỬA: Xóa khỏi constructor
     required this.lessons,
     required this.title,
     required this.courseCode,
@@ -29,14 +29,14 @@ class ReportDetailItem {
 
   factory ReportDetailItem.fromJson(Map<String, dynamic> json) {
     return ReportDetailItem(
-      id: json['id'] ?? 0,
-      dateString: json['date_string'] ?? 'N/A',
-      time: json['time'] ?? '', // Match backend key
-      lessons: json['lessons'] ?? '',
+      id: json['id'] ?? 0, // Backend (hiện tại) không gửi, sẽ là 0
+      dateString: json['dateString'] ?? 'N/A', // <<< SỬA: Sửa key thành 'dateString'
+      // time: json['time'] ?? '', // <<< SỬA: Xóa
+      lessons: json['lessons'] ?? '', // Backend gửi 'lessons' (đã đúng)
       title: json['title'] ?? '',
-      courseCode: json['course_code'] ?? '', // Match backend key
+      courseCode: json['courseCode'] ?? '', // <<< SỬA: Sửa key thành 'courseCode'
       location: json['location'] ?? '',
-      status: json['status'] ?? '',
+      status: json['status'] ?? '', // Backend (hiện tại) không gửi, sẽ là ''
       students: json['students'] ?? 'N/A',
       attendance: json['attendance'] ?? 'N/A',
     );
@@ -59,10 +59,11 @@ class ReportSummary {
 
   factory ReportSummary.fromJson(Map<String, dynamic> json) {
     return ReportSummary(
-      totalSessions: json['total_sessions'] ?? 0,
-      absencesCount: json['absences_count'] ?? 0,
-      makeupsCount: json['makeups_count'] ?? 0,
-      attendanceRate: (json['attendance_rate'] ?? 0.0).toDouble(),
+      // <<< SỬA: Đảm bảo khớp với key JSON từ backend (đã đúng) >>>
+      totalSessions: json['totalSessions'] ?? 0,
+      absencesCount: json['absencesCount'] ?? 0,
+      makeupsCount: json['makeupsCount'] ?? 0,
+      attendanceRate: (json['attendanceRate'] ?? 0.0).toDouble(),
     );
   }
 }
@@ -96,7 +97,7 @@ class ReportData {
 
   factory ReportData.fromJson(Map<String, dynamic> json) {
     final summaryData = ReportSummary.fromJson(json['summary'] ?? {});
-    final chartList = (json['chart_data'] as List<dynamic>? ?? [])
+    final chartList = (json['chartData'] as List<dynamic>? ?? []) // <<< SỬA: 'chartData'
         .map((item) => ChartDataItem.fromJson(item))
         .toList();
     final detailList = (json['details'] as List<dynamic>? ?? [])
