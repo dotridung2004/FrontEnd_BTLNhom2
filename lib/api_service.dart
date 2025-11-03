@@ -398,10 +398,29 @@ class ApiService {
     try {
       final response = await http.get(url, headers: _getHeaders());
       if (response.statusCode == 200) {
-        // Giả sử API trả về một List các đối tượng Room
-        final List<dynamic> body = jsonDecode(utf8.decode(response.bodyBytes));
-        // Chuyển đổi List<dynamic> thành List<Room>
-        return body.map((item) => Room.fromJson(item)).toList();
+        // <<< SỬA LỖI: Xử lý linh hoạt JSON trả về >>>
+        // API có thể trả về:
+        // 1. Một List trực tiếp: [...]
+        // 2. Một Map được bọc: {'data': [...]} (giống fetchUsers)
+
+        final dynamic decodedData = jsonDecode(utf8.decode(response.bodyBytes));
+
+        // Trường hợp 1: API trả về {'data': [...]}
+        if (decodedData is Map &&
+            decodedData.containsKey('data') &&
+            decodedData['data'] is List) {
+          final List<dynamic> body = decodedData['data'];
+          return body.map((item) => Room.fromJson(item)).toList();
+        }
+        // Trường hợp 2: API trả về [...]
+        else if (decodedData is List) {
+          return decodedData.map((item) => Room.fromJson(item)).toList();
+        }
+        // Trường hợp 3: Định dạng không mong đợi
+        else {
+          throw Exception('Định dạng dữ liệu phòng học trả về không đúng.');
+        }
+        // <<< KẾT THÚC SỬA LỖI >>>
       } else {
         return _handleApiError(response, 'Lỗi khi tải danh sách phòng học');
       }

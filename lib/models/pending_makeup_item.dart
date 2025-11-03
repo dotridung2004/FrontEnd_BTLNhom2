@@ -6,7 +6,7 @@ class PendingMakeupItem {
   final String lessonPeriod;
   final String subjectName;
   final String courseCode;
-  final String location;
+  final String roomName; // ✅ SỬA LỖI: Đổi 'location' thành 'roomName'
 
   PendingMakeupItem({
     required this.leaveRequestId,
@@ -16,7 +16,7 @@ class PendingMakeupItem {
     required this.lessonPeriod,
     required this.subjectName,
     required this.courseCode,
-    required this.location,
+    required this.roomName, // ✅ SỬA LỖI: Đổi 'location' thành 'roomName'
   });
 
   factory PendingMakeupItem.fromJson(Map<String, dynamic> json) {
@@ -28,7 +28,8 @@ class PendingMakeupItem {
       lessonPeriod: json['lesson_period'] ?? '',
       subjectName: json['subject_name'] ?? '',
       courseCode: json['course_code'] ?? '',
-      location: json['location'] ?? '',
+      // ✅ SỬA LỖI: Đọc 'room_name' (với dự phòng là 'location' cũ)
+      roomName: json['room_name'] ?? json['location'] ?? 'N/A',
     );
   }
 }

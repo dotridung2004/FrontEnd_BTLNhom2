@@ -1,3 +1,5 @@
+// file: lib/screens/home_screen.dart
+
 // 👉 THÊM MỚI CÁC IMPORT CẦN THIẾT
 import 'package:btl_nhom2/api_service.dart';
 import 'package:btl_nhom2/table/home_summary.dart';
@@ -162,6 +164,12 @@ class _HomeScreenState extends State<HomeScreen> {
         type: BottomNavigationBarType.fixed,
         selectedItemColor: Colors.blue.shade800,
         unselectedItemColor: Colors.grey,
+
+        // <<< SỬA LỖI: Thêm 2 dòng này để fix lỗi chữ bị cắt >>>
+        selectedFontSize: 12.0,
+        unselectedFontSize: 12.0,
+        // <<< KẾT THÚC SỬA >>>
+
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
         items: const [
@@ -204,7 +212,6 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
     _todayDateString = _getTodayDate();
   }
 
-  // <<< SỬA 1: Cập nhật hàm lấy màu sắc
   // Helper để lấy màu dựa trên status (từ API)
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
@@ -223,7 +230,6 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
     }
   }
 
-  // <<< SỬA 2: Thêm hàm dịch trạng thái
   /// Dịch trạng thái từ API (tiếng Anh) sang tiếng Việt
   String _translateStatus(String status) {
     switch (status.toLowerCase()) {
@@ -248,9 +254,9 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
     return DateFormat(' (EEEE, dd/MM/yyyy)', 'vi_VN').format(now);
   }
 
-  // Hàm chuyển đổi chuỗi "4-6" thành giờ "9h45-12h25"
+  // Cần dùng hàm này để chuyển đổi `schedule.lessons` (vd: "4-6")
+  // thành giờ (vd: "09:45 - 12:25")
   String _convertLessonsToTime(String lessonString) {
-    // Input: "4-6" hoặc "4"
     if (lessonString.isEmpty) return "N/A";
 
     List<int> lessons = [];
@@ -279,6 +285,7 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
     }
   }
 
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<HomeSummary>(
@@ -300,7 +307,6 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
         }
 
         final homeData = snapshot.data!;
-        final summary = homeData;
         final schedules = homeData.schedules;
 
         return ListView(
@@ -313,13 +319,13 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 SummaryCard(
-                    value: summary.todayLessons.toString(),
+                    value: homeData.todayLessons.toString(),
                     label: 'Tiết hôm nay'),
                 SummaryCard(
-                    value: summary.weekLessons.toString(),
+                    value: homeData.weekLessons.toString(),
                     label: 'Tiết tuần này'),
                 SummaryCard(
-                    value: '${summary.completionPercent.toStringAsFixed(0)}%',
+                    value: '${homeData.completionPercent.toStringAsFixed(0)}%',
                     label: 'Hoàn thành'),
               ],
             ),
@@ -352,16 +358,14 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                   Padding(
                     padding: const EdgeInsets.only(bottom: 16.0),
                     child: ScheduleCard(
-                      time: _convertLessonsToTime(schedule.time),
+                      time: _convertLessonsToTime(schedule.lessons),
                       lessons: 'Tiết ${schedule.lessons}',
                       title: schedule.title,
                       courseCode: schedule.courseCode,
                       location: schedule.location,
-
-                      // <<< SỬA 3: Truyền dữ liệu đã dịch và màu chính xác
-                      status: _translateStatus(schedule.status), // Dịch sang T.Việt
-                      statusColor: _getStatusColor(schedule.status), // Lấy màu từ status gốc
-                      borderColor: _getStatusColor(schedule.status), // Lấy màu từ status gốc
+                      status: _translateStatus(schedule.status),
+                      statusColor: _getStatusColor(schedule.status),
+                      borderColor: _getStatusColor(schedule.status),
                     ),
                   ),
               ],
@@ -424,6 +428,11 @@ class ScheduleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // <<< SỬA: Thêm dòng này để xử lý location rỗng >>>
+    // Nếu location rỗng, dùng "N/A", ngược lại dùng chính nó.
+    final String displayLocation = location.isEmpty ? "N/A" : location;
+    // <<< KẾT THÚC SỬA >>>
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -447,11 +456,11 @@ class ScheduleCard extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Đây là 'time' (đã được chuyển đổi)
+                  // Đây là 'time' (ví dụ: "09:45 - 12:25" - đã được chuyển đổi)
                   Text(time,
                       style: const TextStyle(
                           fontSize: 20, fontWeight: FontWeight.bold)),
-                  // Đây là 'lessons' (đã thêm chữ "Tiết")
+                  // Đây là 'lessons' (ví dụ: "Tiết 4-6")
                   Text(lessons, style: const TextStyle(color: Colors.grey)),
                 ],
               ),
@@ -486,10 +495,13 @@ class ScheduleCard extends StatelessWidget {
                 children: [
                   Icon(Icons.location_on_outlined, color: Colors.blue.shade800),
                   const SizedBox(width: 8),
-                  Text(location,
+
+                  // <<< SỬA: Dùng 'displayLocation' thay vì 'location' >>>
+                  Text(displayLocation,
                       style: TextStyle(
                           color: Colors.blue.shade800,
                           fontWeight: FontWeight.bold)),
+                  // <<< KẾT THÚC SỬA >>>
                 ],
               ),
               ElevatedButton(

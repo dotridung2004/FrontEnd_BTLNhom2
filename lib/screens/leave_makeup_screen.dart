@@ -12,12 +12,12 @@ import '../models/pending_makeup_item.dart';
 import '../models/leave_history_item.dart';
 import '../models/available_schedule.dart';
 import '../table/home_summary.dart';
-import '../table/teaching_schedule.dart';
+// import '../table/teaching_schedule.dart'; // <<< Không được sử dụng, có thể xóa
 
-// <<< SỬA 1: Import file tiện ích
+// Import file tiện ích
 import '../utils/schedule_utils.dart';
 
-// <<< SỬA: Import model Room
+// Import model Room
 import '../models/room.dart';
 
 //==================================================================
@@ -300,7 +300,7 @@ class _LeaveAndMakeupScreenState extends State<LeaveAndMakeupScreen> {
 }
 
 //==================================================================
-// MÀN HÌNH 2: ĐĂNG KÝ NGHỈ DẠY (<<< ĐÃ SỬA LOGIC TẢI DỮ LIỆU)
+// MÀN HÌNH 2: ĐĂNG KÝ NGHỈ DẠY
 //==================================================================
 class RegisterLeaveScreen extends StatefulWidget {
   final int userId;
@@ -346,10 +346,14 @@ class _RegisterLeaveScreenState extends State<RegisterLeaveScreen> {
     // 2. Tải các lịch "hôm nay"
     try {
       final homeSummary = await _apiService.fetchHomeSummary(widget.userId);
+
+      // 🚩 SỬA LỖI 1: Trả về 'schedules' (tên đúng trong model HomeSummary)
       final todaySchedules = homeSummary.schedules;
 
       for (var schedule in todaySchedules) {
         if (!scheduleMap.containsKey(schedule.id)) {
+
+          // 🚩 SỬA LỖI 1 (tiếp): Dùng 'lessons' (tên đúng trong model TeachingSchedule)
           final displayName =
               '${schedule.title} (${schedule.courseCode}) - Tiết ${schedule.lessons} (Hôm nay)';
 
@@ -497,6 +501,9 @@ class _RegisterLeaveScreenState extends State<RegisterLeaveScreen> {
                   border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide(color: Colors.grey.shade300)),
+                  enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade300)),
                 ),
                 validator: (value) => (value == null || value.trim().isEmpty)
                     ? 'Vui lòng nhập lý do'
@@ -556,7 +563,7 @@ class _RegisterLeaveScreenState extends State<RegisterLeaveScreen> {
 }
 
 //==================================================================
-// MÀN HÌNH 3: ĐĂNG KÝ DẠY BÙ (<<< ĐÃ SỬA LỖI)
+// MÀN HÌNH 3: ĐĂNG KÝ DẠY BÙ
 //==================================================================
 class RegisterMakeupScreen extends StatefulWidget {
   final int userId;
@@ -587,25 +594,17 @@ class _RegisterMakeupScreenState extends State<RegisterMakeupScreen> {
     'Tiết 10-12'
   ];
 
-  // --- 👇 SỬA LỖI ---
-  // 1. Xóa Map hardcoded
-  // final Map<int, String> _rooms = {101: 'Phòng 101-B5', 102: 'Phòng 202-B5'};
-
-  // 2. Thêm Future để tải phòng học
+  // Thêm Future để tải phòng học
   late Future<List<Room>> _roomsFuture;
-  // --- 👆 KẾT THÚC SỬA ---
 
   bool _isSubmitting = false;
 
-  // --- 👇 SỬA LỖI ---
-  // 3. Tải dữ liệu phòng trong initState
   @override
   void initState() {
     super.initState();
     // Gọi API để lấy danh sách phòng khi màn hình được tải
     _roomsFuture = _apiService.fetchAvailableRooms();
   }
-  // --- 👆 KẾT THÚC SỬA ---
 
   @override
   void dispose() {
@@ -615,6 +614,12 @@ class _RegisterMakeupScreenState extends State<RegisterMakeupScreen> {
 
   Future<void> _submitMakeup() async {
     if (!_formKey.currentState!.validate()) return;
+
+    if (_newDate == null) {
+      showErrorDialog(context, "Vui lòng chọn ngày dạy bù");
+      return;
+    }
+
     setState(() => _isSubmitting = true);
     try {
       await _apiService.submitMakeupRequest(
@@ -684,7 +689,7 @@ class _RegisterMakeupScreenState extends State<RegisterMakeupScreen> {
                   final picked = await showDatePicker(
                       context: context,
                       initialDate: DateTime.now(),
-                      firstDate: DateTime.now(),
+                      firstDate: DateTime.now(), // Chỉ cho phép chọn từ hôm nay
                       lastDate: DateTime.now().add(const Duration(days: 60)));
                   if (picked != null) setState(() => _newDate = picked);
                 },
@@ -696,9 +701,12 @@ class _RegisterMakeupScreenState extends State<RegisterMakeupScreen> {
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide(color: Colors.grey.shade300)),
+                    enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey.shade300)),
                   ),
                   child: Text(_newDate == null
-                      ? 'dd/mm/yyyy'
+                      ? 'Chọn ngày...'
                       : DateFormat('dd/MM/yyyy').format(_newDate!)),
                 ),
               ),
@@ -715,6 +723,9 @@ class _RegisterMakeupScreenState extends State<RegisterMakeupScreen> {
                     fillColor: Colors.white,
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey.shade300)),
+                    enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide(color: Colors.grey.shade300))),
                 validator: (v) => v == null ? 'Vui lòng chọn ca học' : null,
                 items: _sessions
@@ -725,8 +736,6 @@ class _RegisterMakeupScreenState extends State<RegisterMakeupScreen> {
               ),
               const SizedBox(height: 16),
 
-              // --- 👇 SỬA LỖI ---
-              // 4. Thay DropdownButtonFormField bằng FutureBuilder
               const Text('Chọn phòng học:',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               const SizedBox(height: 8),
@@ -777,6 +786,10 @@ class _RegisterMakeupScreenState extends State<RegisterMakeupScreen> {
                         border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide:
+                            BorderSide(color: Colors.grey.shade300)),
+                        enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide:
                             BorderSide(color: Colors.grey.shade300))),
                     validator: (v) => v == null ? 'Vui lòng chọn phòng học' : null,
                     items: rooms.map((room) {
@@ -789,7 +802,6 @@ class _RegisterMakeupScreenState extends State<RegisterMakeupScreen> {
                   );
                 },
               ),
-              // --- 👆 KẾT THÚC SỬA ---
               const SizedBox(height: 16),
 
               const Text('Ghi chú:',
@@ -803,6 +815,9 @@ class _RegisterMakeupScreenState extends State<RegisterMakeupScreen> {
                   filled: true,
                   fillColor: Colors.white,
                   border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade300)),
+                  enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide(color: Colors.grey.shade300)),
                 ),
@@ -854,7 +869,7 @@ class ScheduleDetailItem extends StatelessWidget {
     required this.onUpdate,
   });
 
-  // <<< SỬA 2: Thêm hàm helper (giống hệt trong HomeScreen)
+  // Thêm hàm helper (giống hệt trong HomeScreen)
   String _convertLessonsToTime(String lessonString) {
     if (lessonString.isEmpty) return "N/A";
     List<int> lessons = [];
@@ -898,7 +913,7 @@ class ScheduleDetailItem extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // <<< SỬA 3: Hiển thị giờ thay vì tiết
+                // Hiển thị giờ
                 Text(
                     _convertLessonsToTime(
                         item.lessonPeriod), // Dùng lessonPeriod (ví dụ "7-9") để tính toán
@@ -906,7 +921,7 @@ class ScheduleDetailItem extends StatelessWidget {
                         color: Colors.red,
                         fontWeight: FontWeight.bold,
                         fontSize: 18)),
-                // <<< SỬA 4: Hiển thị "Tiết 7-9"
+                // Hiển thị "Tiết 7-9"
                 Text('Tiết ${item.lessonPeriod}', // Hiển thị rõ là "Tiết"
                     style:
                     const TextStyle(color: Colors.grey, fontSize: 14)),
@@ -917,19 +932,24 @@ class ScheduleDetailItem extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // (Đã sửa) Chỉ hiển thị Tên môn + Mã HP
                   Text('${item.subjectName} ${item.courseCode}',
                       style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 15,
                           height: 1.3)),
                   const SizedBox(height: 6.0),
+
+                  // (Đã sửa) Model này có 'dateString'
                   Row(children: [
-                    Icon(Icons.location_on, color: Colors.blue[700], size: 16),
+                    Icon(Icons.calendar_today, color: Colors.blue[700], size: 16),
                     const SizedBox(width: 4.0),
-                    Text(item.location,
+                    Text(item.dateString, // <<< Sử dụng dateString
                         style:
                         TextStyle(color: Colors.blue[700], fontSize: 14)),
                   ]),
+
+                  // Giữ nguyên nút bấm
                   if (showMakeupButton) ...[
                     const Spacer(),
                     Align(
@@ -985,7 +1005,7 @@ class LeaveHistoryDetailItem extends StatelessWidget {
     }
   }
 
-  // <<< SỬA 5: Thêm hàm helper (giống hệt bên trên)
+  // Thêm hàm helper (giống hệt bên trên)
   String _convertLessonsToTime(String lessonString) {
     if (lessonString.isEmpty) return "N/A";
     List<int> lessons = [];
@@ -1027,15 +1047,25 @@ class LeaveHistoryDetailItem extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // <<< SỬA 6: Hiển thị Ngày | Giờ (đã chuyển đổi)
+                      // Hiển thị Ngày | Giờ (đã chuyển đổi)
                       Text(
-                          '${item.dateString}  |  ${_convertLessonsToTime(item.lessonPeriod)}', // <<< *** SỬA LỖI Ở ĐÂY ***
+                          '${item.dateString}  |  ${_convertLessonsToTime(item.lessonPeriod)}',
                           style: const TextStyle(
                               fontWeight: FontWeight.bold, fontSize: 16)),
                       const SizedBox(height: 4),
                       Text('${item.subjectName} ${item.courseCode}',
                           style: const TextStyle(
                               color: Colors.black87, fontSize: 15)),
+
+                      // 🚩 SỬA LỖI 2: Xóa bỏ 'location' vì model không có trường này
+                      // const SizedBox(height: 6.0),
+                      // Row(children: [
+                      //   Icon(Icons.location_on, color: Colors.blue[700], size: 16),
+                      //   const SizedBox(width: 4.0),
+                      //   Text(item.location, // <<< LỖI
+                      //       style:
+                      //       TextStyle(color: Colors.blue[700], fontSize: 14)),
+                      // ]),
                     ],
                   ),
                 ),
@@ -1067,7 +1097,7 @@ class LeaveHistoryDetailItem extends StatelessWidget {
 
 //==================================================================
 // HÀM TÁI SỬ DỤNG ĐỂ HIỂN THỊ DIALOG (Giữ nguyên)
-//==================================================================
+//================================S==================================
 
 Future<bool?> showSuccessDialog(BuildContext context, String message) {
   if (!context.mounted) return Future.value(false);

@@ -6,7 +6,7 @@ class LeaveHistoryItem {
   final String lessonPeriod;
   final String subjectName;
   final String courseCode;
-  final String location;
+  final String roomName; // ✅ SỬA LỖI: Đổi 'location' thành 'roomName'
   final String leaveStatus; // 'pending', 'approved', 'rejected'
   final String reason;
 
@@ -19,7 +19,7 @@ class LeaveHistoryItem {
     required this.lessonPeriod,
     required this.subjectName,
     required this.courseCode,
-    required this.location,
+    required this.roomName, // ✅ SỬA LỖI: Đổi 'location' thành 'roomName'
     // 👆 KẾT THÚC THÊM
     required this.leaveStatus,
     required this.reason,
@@ -35,7 +35,8 @@ class LeaveHistoryItem {
       lessonPeriod: json['lesson_period'] ?? '',
       subjectName: json['subject_name'] ?? '',
       courseCode: json['course_code'] ?? '', // Đảm bảo key khớp với JSON backend
-      location: json['location'] ?? '',
+      // ✅ SỬA LỖI: Đọc 'room_name' (với dự phòng là 'location' cũ)
+      roomName: json['room_name'] ?? json['location'] ?? 'N/A',
       // 👆 KẾT THÚC PARSE
       leaveStatus: json['leave_status'] ?? 'N/A',
       reason: json['reason'] ?? '',
