@@ -212,6 +212,16 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
     _todayDateString = _getTodayDate();
   }
 
+  // 🔽 HÀM MỚI: Dùng để làm mới dữ liệu 🔽
+  Future<void> _refreshHomeData() async {
+    // Gán lại future, FutureBuilder sẽ tự động lắng nghe và rebuild
+    setState(() {
+      _homeSummaryFuture = _apiService.fetchHomeSummary(widget.userId);
+    });
+    // Chờ future mới hoàn thành (để RefreshIndicator biến mất)
+    await _homeSummaryFuture;
+  }
+
   // Helper để lấy màu dựa trên status (từ API)
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
@@ -309,69 +319,76 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
         final homeData = snapshot.data!;
         final schedules = homeData.schedules;
 
-        return ListView(
-          padding: const EdgeInsets.all(16.0),
-          children: [
-            const Text('Lịch trình giảng dạy',
-                style: TextStyle(fontSize: 16, color: Colors.grey)),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                SummaryCard(
-                    value: homeData.todayLessons.toString(),
-                    label: 'Tiết hôm nay'),
-                SummaryCard(
-                    value: homeData.weekLessons.toString(),
-                    label: 'Tiết tuần này'),
-                SummaryCard(
-                    value: '${homeData.completionPercent.toStringAsFixed(0)}%',
-                    label: 'Hoàn thành'),
-              ],
-            ),
-            const SizedBox(height: 24),
-            Row(
-              children: [
-                const Text('Lịch dạy hôm nay',
-                    style:
-                    TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                Text(_todayDateString,
-                    style: const TextStyle(fontSize: 16, color: Colors.grey)),
-              ],
-            ),
-            const SizedBox(height: 16),
-            if (schedules.isEmpty)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 40.0),
-                child: Center(
-                  child: Text(
-                    '🎉 Bạn không có lịch dạy hôm nay.',
-                    style: TextStyle(fontSize: 16, color: Colors.grey),
-                  ),
-                ),
+        // 🔽 SỬA ĐỔI: Bọc ListView bằng RefreshIndicator 🔽
+        return RefreshIndicator(
+          onRefresh: _refreshHomeData, // 👈 GỌI HÀM LÀM MỚI
+          child: ListView(
+            // 👈 THÊM DÒNG NÀY
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16.0),
+            children: [
+              const Text('Lịch trình giảng dạy',
+                  style: TextStyle(fontSize: 16, color: Colors.grey)),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  SummaryCard(
+                      value: homeData.todayLessons.toString(),
+                      label: 'Tiết hôm nay'),
+                  SummaryCard(
+                      value: homeData.weekLessons.toString(),
+                      label: 'Tiết tuần này'),
+                  SummaryCard(
+                      value: '${homeData.completionPercent.toStringAsFixed(0)}%',
+                      label: 'Hoàn thành'),
+                ],
               ),
-
-            // 👇 Dùng Column + for-loop để tạo danh sách ScheduleCard
-            Column(
-              children: [
-                for (final schedule in schedules)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 16.0),
-                    child: ScheduleCard(
-                      time: _convertLessonsToTime(schedule.lessons),
-                      lessons: 'Tiết ${schedule.lessons}',
-                      title: schedule.title,
-                      courseCode: schedule.courseCode,
-                      location: schedule.location,
-                      status: _translateStatus(schedule.status),
-                      statusColor: _getStatusColor(schedule.status),
-                      borderColor: _getStatusColor(schedule.status),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  const Text('Lịch dạy hôm nay',
+                      style:
+                      TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text(_todayDateString,
+                      style: const TextStyle(fontSize: 16, color: Colors.grey)),
+                ],
+              ),
+              const SizedBox(height: 16),
+              if (schedules.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 40.0),
+                  child: Center(
+                    child: Text(
+                      '🎉 Bạn không có lịch dạy hôm nay.',
+                      style: TextStyle(fontSize: 16, color: Colors.grey),
                     ),
                   ),
-              ],
-            )
-          ],
+                ),
+
+              // 👇 Dùng Column + for-loop để tạo danh sách ScheduleCard
+              Column(
+                children: [
+                  for (final schedule in schedules)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16.0),
+                      child: ScheduleCard(
+                        time: _convertLessonsToTime(schedule.lessons),
+                        lessons: 'Tiết ${schedule.lessons}',
+                        title: schedule.title,
+                        courseCode: schedule.courseCode,
+                        location: schedule.location,
+                        status: _translateStatus(schedule.status),
+                        statusColor: _getStatusColor(schedule.status),
+                        borderColor: _getStatusColor(schedule.status),
+                      ),
+                    ),
+                ],
+              )
+            ],
+          ),
         );
+        // 🔼 KẾT THÚC SỬA ĐỔI 🔼
       },
     );
   }
