@@ -47,7 +47,6 @@ class _ReportScreenState extends State<ReportScreen> {
   @override
   void initState() {
     super.initState();
-    // Load initial report for the default date range upon entering the screen
     // <<< SỬA: Không tự động tải lúc khởi động, chờ người dùng nhấn nút
     // _loadReportData();
   }
@@ -91,7 +90,11 @@ class _ReportScreenState extends State<ReportScreen> {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-        title: const Row(children: [Icon(Icons.error, color: Colors.red), SizedBox(width: 8), Text("Lỗi!")]),
+        title: const Row(children: [
+          Icon(Icons.error, color: Colors.red),
+          SizedBox(width: 8),
+          Text("Lỗi!")
+        ]),
         content: Text(message),
         actions: [
           ElevatedButton(
@@ -108,89 +111,88 @@ class _ReportScreenState extends State<ReportScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        // Keep gradient background
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              _buildHeader(), // Header remains static
-              Expanded(
-                child: Container(
-                  // White content area
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(24),
-                      topRight: Radius.circular(24),
-                    ),
+      // 🎨 SỬA: Đổi nền Scaffold thành màu trắng (nền AppBar)
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // 🎨 SỬA: Bỏ _buildHeader() và nền gradient
+            // _buildHeader(), // Header remains static
+            Expanded(
+              child: Container(
+                // 🎨 SỬA: Đổi nền chính của cuộn thành màu xám nhạt
+                decoration: const BoxDecoration(
+                  color: Color(0xFFf8fafc), // Light gray background
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(24),
+                    topRight: Radius.circular(24),
                   ),
-                  // Use RefreshIndicator for pull-to-refresh
-                  child: RefreshIndicator(
-                    onRefresh: _loadReportData, // Reload data on pull
-                    child: SingleChildScrollView(
-                      physics:
-                      const AlwaysScrollableScrollPhysics(), // Ensure scroll
-                      child: Column(
-                        children: [
-                          _buildFilters(), // Filters remain mostly static
+                ),
+                // Use RefreshIndicator for pull-to-refresh
+                child: RefreshIndicator(
+                  onRefresh: _loadReportData, // Reload data on pull
+                  child: SingleChildScrollView(
+                    physics:
+                    const AlwaysScrollableScrollPhysics(), // Ensure scroll
+                    child: Column(
+                      children: [
+                        // 🎨 SỬA: Bọc bộ lọc trong Container màu trắng
+                        Container(
+                          color: Colors.white,
+                          child: _buildFilters(),
+                        ),
 
-                          // --- SỬA: Thay đổi logic hiển thị ---
-                          // Logic mới: Luôn hiển thị các khối UI.
-                          // Các hàm con sẽ tự xử lý việc hiển thị placeholder hoặc dữ liệu.
+                        // --- SỬA: Thay đổi logic hiển thị ---
+                        // Logic mới: Luôn hiển thị các khối UI.
+                        // Các hàm con sẽ tự xử lý việc hiển thị placeholder hoặc dữ liệu.
 
-                          _buildStatsCards(), // Luôn hiển thị (sẽ tự xử lý placeholder)
+                        _buildStatsCards(), // Luôn hiển thị (sẽ tự xử lý placeholder)
 
-                          _buildChartSection(), // Luôn hiển thị (sẽ tự xử lý placeholder)
+                        _buildChartSection(), // Luôn hiển thị (sẽ tự xử lý placeholder)
 
-                          _buildScheduleSection(), // Luôn hiển thị (sẽ tự xử lý placeholder)
+                        _buildScheduleSection(), // Luôn hiển thị (sẽ tự xử lý placeholder)
 
-                          // Hiển thị loading hoặc thông báo (nếu có) ở dưới cùng
-                          if (_isLoading)
-                            const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 50.0),
-                              child: Center(child: CircularProgressIndicator()),
-                            )
-                          else if (_reportData == null && !_isLoading)
-                          // Trạng thái ban đầu hoặc lỗi
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 50.0, horizontal: 20.0),
-                              child: Center(
-                                child: Text(
-                                  _errorMessage ??
-                                      'Chọn bộ lọc và nhấn "Xem báo cáo" để tải dữ liệu.',
-                                  style: TextStyle(
-                                      color: _errorMessage != null
-                                          ? Colors.red
-                                          : Colors.grey.shade600,
-                                      fontSize: 16),
-                                  textAlign: TextAlign.center,
-                                ),
+                        // Hiển thị loading hoặc thông báo (nếu có) ở dưới cùng
+                        if (_isLoading)
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 50.0),
+                            child: Center(child: CircularProgressIndicator()),
+                          )
+                        else if (_reportData == null && !_isLoading)
+                        // Trạng thái ban đầu hoặc lỗi
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 50.0, horizontal: 20.0),
+                            child: Center(
+                              child: Text(
+                                _errorMessage ??
+                                    'Chọn bộ lọc và nhấn "Xem báo cáo" để tải dữ liệu.',
+                                style: TextStyle(
+                                    color: _errorMessage != null
+                                        ? Colors.red
+                                        : Colors.grey.shade600,
+                                    fontSize: 16),
+                                textAlign: TextAlign.center,
                               ),
                             ),
+                          ),
 
-                          const SizedBox(height: 30),
-                        ],
-                      ),
+                        const SizedBox(height: 30),
+                      ],
                     ),
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 
   // --- Header (No change needed) ---
+  // 🎨 SỬA: Bỏ _buildHeader()
+  /*
   Widget _buildHeader() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -210,6 +212,7 @@ class _ReportScreenState extends State<ReportScreen> {
       ),
     );
   }
+  */
 
   // --- Filters (Update Button Action) ---
   Widget _buildFilters() {
@@ -218,6 +221,16 @@ class _ReportScreenState extends State<ReportScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // 🎨 SỬA: Thêm tiêu đề "Báo cáo thống kê" vào đây
+          const Text(
+            'Báo cáo thống kê',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1e293b),
+            ),
+          ),
+          const SizedBox(height: 20),
           // Report Type Dropdown (Keep as is)
           const Text('Loại báo cáo',
               style: TextStyle(
@@ -371,9 +384,7 @@ class _ReportScreenState extends State<ReportScreen> {
                 _chartColors['Tổng buổi'] ?? _defaultChartColor),
             _buildStatCard(summary.absencesCount.toString(), 'Nghỉ',
                 _chartColors['Nghỉ'] ?? _defaultChartColor),
-            _buildStatCard(
-                summary.makeupsCount.toString(),
-                'Dạy bù',
+            _buildStatCard(summary.makeupsCount.toString(), 'Dạy bù',
                 _chartColors['Dạy bù'] ?? _defaultChartColor),
             _buildStatCard('${summary.attendanceRate.toStringAsFixed(1)}%',
                 'Chuyên cần', const Color(0xFF10b981)),
@@ -496,6 +507,7 @@ class _ReportScreenState extends State<ReportScreen> {
         _reportData != null && _reportData!.chartData.isNotEmpty;
 
     return Container(
+      // 🎨 SỬA: Thêm margin ngang để tách biệt với nền xám
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -737,20 +749,9 @@ class _ReportScreenState extends State<ReportScreen> {
     // 1. Dữ liệu có và chi tiết không rỗng
     if (_reportData != null && _reportData!.details.isNotEmpty) {
       final details = _reportData!.details;
+      // 🎨 SỬA: Bỏ decoration (nền trắng, bo góc, shadow)
       return Container(
         margin: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.05),
-              spreadRadius: 1,
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            )
-          ],
-        ),
         child: Column(
           children: [
             _buildSectionHeader(), // Header with toggle
@@ -767,18 +768,8 @@ class _ReportScreenState extends State<ReportScreen> {
       return Container(
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
           padding: const EdgeInsets.all(30),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.05),
-                spreadRadius: 1,
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              )
-            ],
-          ),
+          // 🎨 SỬA: Bỏ nền trắng/shadow, để hòa vào nền xám
+          // decoration: BoxDecoration(...)
           child: const Center(
               child: Text(
                   "Không có lịch dạy chi tiết trong khoảng thời gian này.",
@@ -786,20 +777,9 @@ class _ReportScreenState extends State<ReportScreen> {
     }
 
     // 3. Dữ liệu là null (trạng thái ban đầu/placeholder)
+    // 🎨 SỬA: Bỏ decoration (nền trắng, bo góc, shadow)
     return Container(
       margin: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.05),
-            spreadRadius: 1,
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          )
-        ],
-      ),
       child: Column(
         children: [
           _buildSectionHeader(), // Hiển thị header
@@ -825,11 +805,14 @@ class _ReportScreenState extends State<ReportScreen> {
   Widget _buildSectionHeader() {
     return Container(
       padding: const EdgeInsets.all(16),
+      // 🎨 SỬA: Bỏ decoration (nền xám)
+      /*
       decoration: const BoxDecoration(
         color: Color(0xFFf1f5f9), // Nền xám nhạt cho header
         borderRadius: BorderRadius.only(
             topLeft: Radius.circular(20), topRight: Radius.circular(20)),
       ),
+      */
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -883,7 +866,8 @@ class _ReportScreenState extends State<ReportScreen> {
     final sortedKeys = groupedByDate.keys.toList();
 
     return Padding(
-      padding: const EdgeInsets.all(16),
+      // 🎨 SỬA: Bỏ padding (đã có ở _buildScheduleSection)
+      padding: const EdgeInsets.all(0),
       child: Column(
         children: sortedKeys.map((dateKey) {
           final itemsForDate = groupedByDate[dateKey]!;
@@ -906,9 +890,10 @@ class _ReportScreenState extends State<ReportScreen> {
                 dateKey,
                 dayName,
                 "${itemsForDate.length} buổi",
-                "Trung bình",
-                Colors.grey.shade300,
-                Colors.grey.shade700,
+                "Trung bình", // 🎨 SỬA: Dữ liệu này vẫn là static
+                // 🎨 SỬA: Đổi màu tag xám -> cam
+                const Color(0xFFfef3c7), // amber-100
+                const Color(0xFFb45309), // amber-700
                 itemsForDate),
           );
         }).toList(),
@@ -928,7 +913,8 @@ class _ReportScreenState extends State<ReportScreen> {
       ) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFf8fafc),
+        // 🎨 SỬA: Đổi nền xám nhạt -> trắng
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFe2e8f0)),
       ),
@@ -999,7 +985,8 @@ class _ReportScreenState extends State<ReportScreen> {
 
   // --- SỬA: Hoàn thiện `_buildClassItem` (thay thế /* ... */) ---
   Widget _buildClassItem(ReportDetailItem item) {
-    final subjectColor = _getColorForSubject(item.title);
+    // 🎨 SỬA: Bỏ màu ngẫu nhiên
+    // final subjectColor = _getColorForSubject(item.title);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -1029,18 +1016,18 @@ class _ReportScreenState extends State<ReportScreen> {
                   padding:
                   const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(colors: [
-                      subjectColor.withOpacity(0.2),
-                      subjectColor.withOpacity(0.3)
-                    ]),
+                    // 🎨 SỬA: Đổi gradient -> màu xanh nhạt (giống thẻ chuyên cần)
+                    color: const Color(0xFFdbeafe),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
                     item.title,
-                    style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: subjectColor),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      // 🎨 SỬA: Đổi màu ngẫu nhiên -> màu xanh đậm
+                      color: Color(0xFF1e40af),
+                    ),
                   ),
                 ),
               ),

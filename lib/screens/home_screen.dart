@@ -420,18 +420,31 @@ class ScheduleCard extends StatelessWidget {
     required this.lessons,
     required this.title,
     required this.courseCode,
-    required this.location,
-    required this.status, // Bây giờ sẽ nhận 'Theo lịch', 'Đã hủy', v.v.
-    required this.statusColor, // Sẽ nhận Colors.blue, Colors.red, v.v.
+    required this.location, // 'location' này nhận chuỗi "C5-302 - N/A"
+    required this.status,
+    required this.statusColor,
     required this.borderColor,
   });
 
   @override
   Widget build(BuildContext context) {
-    // <<< SỬA: Thêm dòng này để xử lý location rỗng >>>
-    // Nếu location rỗng, dùng "N/A", ngược lại dùng chính nó.
-    final String displayLocation = location.isEmpty ? "N/A" : location;
-    // <<< KẾT THÚC SỬA >>>
+    // --- 👇 BẮT ĐẦU SỬA LỖI N/A ---
+
+    // 1. Lấy chuỗi gốc từ API (ví dụ: "C5-302 - N/A")
+    String displayLocation = location;
+
+    // 2. Kiểm tra xem chuỗi có kết thúc bằng " - N/A" không
+    if (displayLocation.endsWith(" - N/A")) {
+      // 3. Nếu có, cắt bỏ 7 ký tự cuối (" - N/A")
+      displayLocation = displayLocation.substring(0, displayLocation.length - " - N/A".length);
+    }
+
+    // 4. (Phòng ngừa) Nếu sau khi cắt mà chuỗi rỗng, thì hiển thị "N/A"
+    if (displayLocation.isEmpty) {
+      displayLocation = "N/A";
+    }
+
+    // --- 👆 KẾT THÚC SỬA LỖI N/A ---
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -456,11 +469,9 @@ class ScheduleCard extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Đây là 'time' (ví dụ: "09:45 - 12:25" - đã được chuyển đổi)
                   Text(time,
                       style: const TextStyle(
                           fontSize: 20, fontWeight: FontWeight.bold)),
-                  // Đây là 'lessons' (ví dụ: "Tiết 4-6")
                   Text(lessons, style: const TextStyle(color: Colors.grey)),
                 ],
               ),
@@ -468,13 +479,12 @@ class ScheduleCard extends StatelessWidget {
                 padding:
                 const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  // Dùng màu nền nhạt
                     color: statusColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(20)),
                 child: Text(
-                  status, // Hiển thị status đã được dịch
+                  status,
                   style: TextStyle(
-                      color: statusColor, // Dùng màu đậm cho chữ
+                      color: statusColor,
                       fontWeight: FontWeight.bold),
                 ),
               ),
@@ -496,12 +506,11 @@ class ScheduleCard extends StatelessWidget {
                   Icon(Icons.location_on_outlined, color: Colors.blue.shade800),
                   const SizedBox(width: 8),
 
-                  // <<< SỬA: Dùng 'displayLocation' thay vì 'location' >>>
+                  // <<< SỬA: Dùng 'displayLocation' đã được xử lý >>>
                   Text(displayLocation,
                       style: TextStyle(
                           color: Colors.blue.shade800,
                           fontWeight: FontWeight.bold)),
-                  // <<< KẾT THÚC SỬA >>>
                 ],
               ),
               ElevatedButton(
