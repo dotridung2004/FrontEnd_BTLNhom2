@@ -46,7 +46,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     // --- ⬆️ KẾT THÚC SỬA LỖI 1 ---
   }
 
-  // Hàm gọi API
+  // Hàm gọi API (dùng cho nút bấm)
   void _loadData() {
     // --- ⬇️ SỬA LỖI LOGIC 2: Gán Future MỚI và CHUỖI .then() ---
     var newFuture = _apiService.fetchScheduleData(widget.userId, _weekOffset);
@@ -70,6 +70,36 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       _scheduleDataFuture = newFuture;
     });
     // --- ⬆️ KẾT THÚC SỬA LỖI 2 ---
+  }
+
+  // 🔽 HÀM MỚI: Dùng cho "Kéo để làm mới" (Pull to Refresh) 🔽
+  Future<void> _handleRefresh() async {
+    // Gọi API với _weekOffset hiện tại
+    var newFuture = _apiService.fetchScheduleData(widget.userId, _weekOffset);
+
+    try {
+      // Chờ dữ liệu mới về
+      final data = await newFuture;
+
+      if (mounted) {
+        int newIndex = 0;
+        if (_weekOffset == 0) {
+          newIndex = data.weekData.todayIndex;
+        }
+        // Cập nhật cả Future và Index cùng lúc
+        setState(() {
+          _scheduleDataFuture = Future.value(data); // Gán dữ liệu đã hoàn thành
+          _selectedDateIndex = newIndex;
+        });
+      }
+    } catch (e) {
+      // Nếu lỗi, cập nhật Future để FutureBuilder hiển thị lỗi
+      if (mounted) {
+        setState(() {
+          _scheduleDataFuture = Future.error(e);
+        });
+      }
+    }
   }
 
   // <<< MỚI: Thêm hàm chuyển đổi Tiết -> Giờ (Giống HomeScreen) >>>
@@ -152,47 +182,60 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                   ? _buildTodayView(todayData) // 👈 Dùng data
                   : _buildWeekView(weekData), // 👈 Dùng data
 
-              // DANH SÁCH LỊCH DẠY ĐỘNG
+              // 🔽 SỬA ĐỔI: THÊM REFRESHINDICATOR 🔽
               Expanded(
-                child: _currentSchedules.isEmpty
-                    ? const Center(
-                  child: Text(
-                    '🎉 Không có lịch dạy cho ngày này.',
-                    style: TextStyle(fontSize: 16, color: Colors.grey),
-                  ),
-                )
-                    : ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  itemCount: _currentSchedules.length,
-                  itemBuilder: (context, index) {
-                    final schedule = _currentSchedules[index];
-
-                    // --- ⬇️ SỬA LỖI TIẾNG ANH TẠI ĐÂY ⬇️ ---
-                    // 1. Lấy màu dựa trên trạng thái (tiếng Anh) từ DB
-                    final color = _getStatusColor(schedule.status);
-                    // 2. Lấy chữ (tiếng Việt) dựa trên trạng thái
-                    final vietnameseStatus = _getVietnameseStatus(schedule.status);
-                    // --- ⬆️ KẾT THÚC SỬA LỖI ⬆️ ---
-
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 16.0),
-                      child: ScheduleCard(
-                        time: _convertLessonsToTime(schedule.lessons),
-                        lessons: 'Tiết ${schedule.lessons}',
-                        title: schedule.title,
-                        courseCode: schedule.courseCode,
-                        location: schedule.location,
-
-                        // Truyền trạng thái đã được dịch sang tiếng Việt
-                        status: vietnameseStatus,
-
-                        statusColor: color,
-                        borderColor: color,
+                child: RefreshIndicator(
+                  onRefresh: _handleRefresh, // 👈 GỌI HÀM LÀM MỚI
+                  child: _currentSchedules.isEmpty
+                      ? Stack(
+                    // Dùng Stack để cho phép kéo làm mới ngay cả khi rỗng
+                    children: [
+                      ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
                       ),
-                    );
-                  },
+                      const Center(
+                        child: Text(
+                          '🎉 Không có lịch dạy cho ngày này.',
+                          style: TextStyle(fontSize: 16, color: Colors.grey),
+                        ),
+                      ),
+                    ],
+                  )
+                      : ListView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(), // Luôn cho phép kéo
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    itemCount: _currentSchedules.length,
+                    itemBuilder: (context, index) {
+                      final schedule = _currentSchedules[index];
+
+                      // --- ⬇️ SỬA LỖI TIẾNG ANH TẠI ĐÂY ⬇️ ---
+                      // 1. Lấy màu dựa trên trạng thái (tiếng Anh) từ DB
+                      final color = _getStatusColor(schedule.status);
+                      // 2. Lấy chữ (tiếng Việt) dựa trên trạng thái
+                      final vietnameseStatus = _getVietnameseStatus(schedule.status);
+                      // --- ⬆️ KẾT THÚC SỬA LỖI ⬆️ ---
+
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 16.0),
+                        child: ScheduleCard(
+                          time: _convertLessonsToTime(schedule.lessons),
+                          lessons: 'Tiết ${schedule.lessons}',
+                          title: schedule.title,
+                          courseCode: schedule.courseCode,
+                          location: schedule.location,
+
+                          // Truyền trạng thái đã được dịch sang tiếng Việt
+                          status: vietnameseStatus,
+
+                          statusColor: color,
+                          borderColor: color,
+                        ),
+                      );
+                    },
+                  ),
                 ),
               )
+              // 🔼 KẾT THÚC SỬA ĐỔI 🔼
             ],
           );
         },
