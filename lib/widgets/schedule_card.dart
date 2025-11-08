@@ -18,6 +18,24 @@ class ScheduleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // --- 👇 BẮT ĐẦU SỬA LỖI N/A ---
+
+    // 1. Lấy chuỗi gốc từ API (ví dụ: "C5-302 - N/A")
+    String displayLocation = location;
+
+    // 2. Kiểm tra xem chuỗi có kết thúc bằng " - N/A" không
+    if (displayLocation.endsWith(" - N/A")) {
+      // 3. Nếu có, cắt bỏ 7 ký tự cuối (" - N/A")
+      displayLocation = displayLocation.substring(0, displayLocation.length - " - N/A".length);
+    }
+
+    // 4. (Phòng ngừa) Nếu sau khi cắt mà chuỗi rỗng, thì hiển thị "N/A"
+    if (displayLocation.isEmpty) {
+      displayLocation = "N/A";
+    }
+
+    // --- 👆 KẾT THÚC SỬA LỖI N/A ---
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -60,7 +78,9 @@ class ScheduleCard extends StatelessWidget {
                 children: [
                   Icon(Icons.location_on_outlined, color: Colors.blue.shade800),
                   const SizedBox(width: 8),
-                  Text(location, style: TextStyle(color: Colors.blue.shade800, fontWeight: FontWeight.bold)),
+
+                  // <<< SỬA: Dùng 'displayLocation' thay vì 'location' >>>
+                  Text(displayLocation, style: TextStyle(color: Colors.blue.shade800, fontWeight: FontWeight.bold)),
                 ],
               ),
               ElevatedButton(
